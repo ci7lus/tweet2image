@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.loading-center {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.placeholder-cover {
+  padding-top: 28.125%;
+  padding-bottom: 28.125%;
+}
+
+/* preloaders by potato4d https://github.com/potato4d/preloaders */
+
+.loading {
+  width: 50px;
+  height: 50px;
+  position: relative;
+  transition: all 0.5s;
+}
+
+.loading::before,
+.loading::after {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(99, 179, 237, 0.5);
+  /* 色を変えました */
+  content: "";
+  border-radius: 50%;
+}
+
+.loading::before {
+  animation: anim1 2s infinite;
+}
+
+.loading::after {
+  animation: anim1 2s -1s infinite;
+}
+
+@keyframes anim1 {
+  0% {
+    transform: scale(0);
+  }
+
+  50% {
+    transform: scale(2.5);
+  }
+
+  100% {
+    transform: scale(0);
+  }
+}
+
+/* ここまで */
