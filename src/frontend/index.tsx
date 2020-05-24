@@ -184,24 +184,31 @@ const App: React.FC<{}> = () => {
       <div className="container mx-auto max-w-screen-md mx-2">
         <hr />
         <div className="flex justify-end text-xs p-4">
-          tweet-card&nbsp;/&nbsp;
-          <a
-            className="text-blue-400"
-            target="_blank"
-            href="https://github.com/ci7lus/tweet-card"
-            rel="noopener"
-          >
-            code &amp; bug report
-          </a>
-          &nbsp;/&nbsp;Animation from&nbsp;
-          <a
-            className="text-blue-400"
-            href="https://github.com/potato4d/preloaders"
-            target="_blank"
-            rel="noopener"
-          >
-            potato4d/preloaders
-          </a>
+          <div className="text-right">
+            <span>
+              tweet-card&nbsp;/&nbsp;
+              <a
+                className="text-blue-400"
+                target="_blank"
+                href="https://github.com/ci7lus/tweet-card"
+                rel="noopener"
+              >
+                code &amp; bug report
+              </a>
+              &nbsp;/&nbsp;
+            </span>
+            <span className="inline-block">
+              Animation from&nbsp;
+              <a
+                className="text-blue-400"
+                href="https://github.com/potato4d/preloaders"
+                target="_blank"
+                rel="noopener"
+              >
+                potato4d/preloaders
+              </a>
+            </span>
+          </div>
         </div>
       </div>
     </div>
