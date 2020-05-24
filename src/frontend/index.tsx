@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import ReactDOM from "react-dom"
+import { ToastContainer, toast, Slide } from "react-toastify"
 
 const App: React.FC<{}> = () => {
   const [loading, setLoading] = useState(false)
@@ -63,6 +64,12 @@ const App: React.FC<{}> = () => {
 
   return (
     <div className="min-h-screen w-full flex flex-col text-gray-800">
+      <ToastContainer
+        position={"top-left"}
+        autoClose={2500}
+        closeOnClick={true}
+        transition={Slide}
+      />
       <div className="flex-1">
         <div className="container mx-auto max-w-screen-md p-4">
           <div className="m-1 text-2xl">tweet-card</div>
@@ -74,7 +81,9 @@ const App: React.FC<{}> = () => {
                   Tweet Url
                 </label>
                 <input
-                  className="appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                  className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
+                    loading && "bg-gray-200"
+                  }`}
                   type="text"
                   placeholder="https://twitter.com/jack/status/20"
                   value={url}
@@ -123,7 +132,7 @@ const App: React.FC<{}> = () => {
                 <div className="flex flex-wrap items-stretch w-full mb-4 relative">
                   <input
                     type="text"
-                    className="flex-shrink flex-grow flex-auto leading-normal w-px flex-1 border h-10 border-grey-light rounded rounded-r-none px-3 relative"
+                    className="flex-shrink flex-grow flex-auto leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-200 text-gray-700 border border-gray-200"
                     value={getImageUrl()}
                     readOnly
                   />
@@ -134,7 +143,7 @@ const App: React.FC<{}> = () => {
                         try {
                           if (navigator.clipboard) {
                             await navigator.clipboard.writeText(getImageUrl())
-                            alert("copied.")
+                            toast.info("copied.")
                           }
                         } catch (e) {
                           console.error(e)
@@ -151,7 +160,7 @@ const App: React.FC<{}> = () => {
                 <div className="flex flex-wrap items-stretch w-full mb-4 relative">
                   <input
                     type="text"
-                    className="flex-shrink flex-grow flex-auto leading-normal w-px flex-1 border h-10 border-grey-light rounded rounded-r-none px-3 relative"
+                    className="flex-shrink flex-grow flex-auto leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-200 text-gray-700 border border-gray-200"
                     value={getScrapboxSnippet()}
                     readOnly
                   />
@@ -164,7 +173,7 @@ const App: React.FC<{}> = () => {
                             await navigator.clipboard.writeText(
                               getScrapboxSnippet()
                             )
-                            alert("copied.")
+                            toast.info("copied.")
                           }
                         } catch (e) {
                           console.error(e)

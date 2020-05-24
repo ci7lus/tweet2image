@@ -6,6 +6,7 @@ module.exports = {
     "./src/frontend/**/*.tsx",
   ],
   whitelist: ["body", "html", "svg"],
+  whitelistPatterns: [/Toastify.+/],
   extractors: [
     {
       extensions: ["html", "ts", "tsx"],
