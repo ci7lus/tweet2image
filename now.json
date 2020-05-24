@@ -10,7 +10,7 @@
   "builds": [
     {
       "src": "src/**/*.ts",
-      "use": "@now/node@canary"
+      "use": "@now/node"
     },
     {
       "src": "package.json",
