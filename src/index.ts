@@ -100,9 +100,9 @@ const main = async () => {
         clip: rect,
         type: mode,
       })
-      ctx.body = buffer
-      ctx.type = `image/${mode}`
       ctx.set("Cache-Control", "s-maxage=600, stale-while-revalidate")
+      ctx.type = `image/${mode}`
+      ctx.body = buffer
     } catch (error) {
       console.error(error)
       return ctx.throw(500)
