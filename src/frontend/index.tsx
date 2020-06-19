@@ -11,7 +11,7 @@ const App: React.FC<{}> = () => {
   const [tweetId, setTweetId] = useState(null as string | null)
 
   const getImageUrl = () => {
-    return `${location.protocol}//${location.hostname}/${tweetId}.png`
+    return `${location.protocol}//${location.hostname}/${tweetId}.jpg`
   }
 
   const getScrapboxSnippet = () => {
@@ -30,7 +30,7 @@ const App: React.FC<{}> = () => {
         setLoading(true)
 
         try {
-          const r = await fetch(`/${m[2]}.png`)
+          const r = await fetch(`/${m[2]}.jpg`)
 
           if (!r.ok) {
             switch (r.status) {
