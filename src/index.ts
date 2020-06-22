@@ -49,10 +49,13 @@ const main = async () => {
     const r = await axios.head(
       `https://twitter.com/twitter/status/${tweetId}`,
       {
-        validateStatus: (code) => code < 500,
+        headers: {
+          "user-agent": "card-bot",
+        },
+        validateStatus: () => true,
       }
     )
-    if (![301, 200].includes(r.status)) return ctx.throw(404)
+    if (![301, 200].includes(r.status)) return ctx.throw(r.status)
     await chromium.font(
       "https://rawcdn.githack.com/googlefonts/noto-cjk/be6c059ac1587e556e2412b27f5155c8eb3ddbe6/NotoSansCJKjp-Regular.otf"
     )
@@ -80,13 +83,16 @@ const main = async () => {
           })
         )
       )
-      await page.waitForFunction(() => {
-        return document
-          .querySelector("twitter-widget")
-          ?.shadowRoot?.querySelector(
-            "div > div > div > div > blockquote > div"
-          )
-      })
+      await page.waitForFunction(
+        () => {
+          return document
+            .querySelector("twitter-widget")
+            ?.shadowRoot?.querySelector(
+              "div > div > div > div > blockquote > div"
+            )
+        },
+        { timeout: 5000 }
+      )
       await page.waitFor(500)
       const rect = await page.evaluate(() => {
         const { x, y, width, height } = document
