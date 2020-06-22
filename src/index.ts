@@ -56,6 +56,9 @@ const main = async () => {
     await chromium.font(
       "https://rawcdn.githack.com/googlefonts/noto-cjk/be6c059ac1587e556e2412b27f5155c8eb3ddbe6/NotoSansCJKjp-Regular.otf"
     )
+    await chromium.font(
+      "https://rawcdn.githack.com/googlefonts/noto-fonts/ea9154f9a0947972baa772bc6744f1ec50007575/hinted/NotoSans/NotoSans-Regular.ttf"
+    )
     const browser = await chromium.puppeteer.launch({
       args: chromium.args,
       defaultViewport: {

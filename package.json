@@ -33,6 +33,6 @@
   },
   "scripts": {
     "dev": "ts-node src/index.ts",
-    "build": "parcel build src/frontend/index.html --no-autoinstall --out-dir ./public"
+    "build": "parcel build src/frontend/index.html"
   }
 }
