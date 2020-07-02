@@ -2,8 +2,6 @@ import Koa from "koa"
 import chromium from "chrome-aws-lambda"
 import Router from "koa-router"
 import axios from "axios"
-import { renderToStaticMarkup } from "react-dom/server"
-import { embedTweet } from "./tweet"
 
 const port = process.env.PORT || "5000"
 
@@ -36,7 +34,7 @@ const main = async () => {
     await next()
   })
 
-  router.options("*", async (ctx) => {
+  router.options("(.*)", async (ctx) => {
     ctx.status = 204
   })
 
@@ -75,34 +73,21 @@ const main = async () => {
     try {
       const pages = await browser.pages()
       const page = 0 < pages.length ? pages[0] : await browser.newPage()
-      await page.goto("https://example.com")
-      await page.setContent(
-        renderToStaticMarkup(
-          embedTweet({
-            tweetId,
-          })
-        )
-      )
-      await page.waitForFunction(
-        () => {
-          return document
-            .querySelector("twitter-widget")
-            ?.shadowRoot?.querySelector(
-              "div > div > div > div > blockquote > div"
-            )
-        },
-        { timeout: 5000 }
-      )
-      await page.waitFor(500)
+      await Promise.all([
+        page.goto(
+          `https://platform.twitter.com/embed/index.html?hideCard=false&hideThread=false&widgetsVersion=9066bb2%3A1593540614199&lang=en&theme=light&id=${tweetId}`
+        ),
+        page.waitForNavigation({ waitUntil: ["load", "networkidle2"] }),
+      ])
       const rect = await page.evaluate(() => {
         const { x, y, width, height } = document
-          .querySelector("twitter-widget")
+          .querySelector("#app > div > div")
           ?.getBoundingClientRect()!
         return {
-          x: x - 2,
-          y: y - 2,
-          width: width + 4,
-          height: height + 4,
+          x: x - 1,
+          y: y - 1,
+          width: width + 2,
+          height: height + 2,
         }
       })
       const buffer = await page.screenshot({
