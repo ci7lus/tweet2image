@@ -73,11 +73,20 @@ const main = async () => {
     try {
       const pages = await browser.pages()
       const page = 0 < pages.length ? pages[0] : await browser.newPage()
+      await page.evaluateOnNewDocument(() => {
+        const timeout = setTimeout
+        // @ts-ignore
+        window.setTimeout = function (fn: Function, ms?: number) {
+          const s = fn.toString()
+          if (s.includes("timeout") || s.includes("native code")) return
+          timeout(() => fn(), 0)
+        }
+      })
       await Promise.all([
         page.goto(
           `https://platform.twitter.com/embed/index.html?hideCard=false&hideThread=false&widgetsVersion=9066bb2%3A1593540614199&lang=en&theme=light&id=${tweetId}`
         ),
-        page.waitForNavigation({ waitUntil: ["load", "networkidle2"] }),
+        page.waitForNavigation({ waitUntil: ["networkidle0"] }),
       ])
       const rect = await page.evaluate(() => {
         const { x, y, width, height } = document
