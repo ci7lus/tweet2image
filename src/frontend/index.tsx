@@ -41,6 +41,10 @@ const App: React.FC<{}> = () => {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    await handleSubmitForm()
+  }
+
+  const handleSubmitForm = async () => {
     if (url.length === 0) return
     const m = url.match(/.*twitter.com\/(.+)\/status\/(\d+).*?/)
     if (!m) {
@@ -125,7 +129,11 @@ const App: React.FC<{}> = () => {
                       setUrl(e.target.value)
                     }}
                     onBlur={(e) => {
-                      e.target.form.requestSubmit()
+                      if (e.target.form.requestSubmit) {
+                        e.target.form.requestSubmit()
+                      } else {
+                        handleSubmitForm()
+                      }
                     }}
                     disabled={loading}
                     pattern=".*twitter.com\/(.+)\/status\/(\d+).*?"
@@ -147,7 +155,11 @@ const App: React.FC<{}> = () => {
                             id="format"
                             value={imageFormat}
                             onBlur={(e) => {
-                              e.target.form.requestSubmit()
+                              if (e.target.form.requestSubmit) {
+                                e.target.form.requestSubmit()
+                              } else {
+                                handleSubmitForm()
+                              }
                             }}
                             onChange={(e) => {
                               setImageFormat(e.target.value)
@@ -183,7 +195,11 @@ const App: React.FC<{}> = () => {
                             id="theme"
                             value={theme}
                             onBlur={(e) => {
-                              e.target.form.requestSubmit()
+                              if (e.target.form.requestSubmit) {
+                                e.target.form.requestSubmit()
+                              } else {
+                                handleSubmitForm()
+                              }
                             }}
                             onChange={(e) => {
                               setTheme(e.target.value)
@@ -224,7 +240,11 @@ const App: React.FC<{}> = () => {
                               setLang(e.target.value.toLowerCase())
                             }}
                             onBlur={(e) => {
-                              e.target.form.requestSubmit()
+                              if (e.target.form.requestSubmit) {
+                                e.target.form.requestSubmit()
+                              } else {
+                                handleSubmitForm()
+                              }
                             }}
                             disabled={loading}
                             maxLength={2}
@@ -254,7 +274,11 @@ const App: React.FC<{}> = () => {
                               setScale(p)
                             }}
                             onBlur={(e) => {
-                              e.target.form.requestSubmit()
+                              if (e.target.form.requestSubmit) {
+                                e.target.form.requestSubmit()
+                              } else {
+                                handleSubmitForm()
+                              }
                             }}
                             disabled={loading}
                             min={1}
