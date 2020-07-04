@@ -2,6 +2,7 @@ import Koa from "koa"
 import chromium from "chrome-aws-lambda"
 import Router from "koa-router"
 import axios from "axios"
+import querystring from "querystring"
 
 const port = process.env.PORT || "5000"
 
@@ -39,9 +40,20 @@ const main = async () => {
   })
 
   router.get(/(\d+)\.(png|jpg)/, async (ctx) => {
+    const lang = ctx.query.lang || "en"
+    if (!lang.match(/[a-z]{2}/)) return ctx.throw(400)
+    const theme = ctx.query.theme || "light"
+    if (!theme.match(/[a-z]+/)) return ctx.throw(400)
+    const scale = parseFloat(ctx.query.scale || "2")
+    if (Number.isNaN(scale) || scale < 1 || 5 < scale) return ctx.throw(400)
+    const hideCard =
+      parseInt(ctx.query.hideCard || "0") === 1 || ctx.query.hideCard === "true"
+    const hideThread =
+      parseInt(ctx.query.hideThread || "0") === 1 ||
+      ctx.query.hideThread === "true"
     const tweetId = ctx.params[0]
-    const mode = ctx.params[1].replace("jpg", "jpeg")
-    if (!["png", "jpeg"].includes(mode)) return ctx.throw(400)
+    const mode = ctx.params[1]
+    if (!["png", "jpg"].includes(mode)) return ctx.throw(400)
     const parsedTweetId = parseInt(tweetId)
     if (Number.isNaN(parsedTweetId)) return ctx.throw(400)
     const r = await axios.head(
@@ -64,7 +76,7 @@ const main = async () => {
       args: chromium.args,
       defaultViewport: {
         ...chromium.defaultViewport,
-        deviceScaleFactor: 2,
+        deviceScaleFactor: scale,
       },
       executablePath: await chromium.executablePath,
       headless: chromium.headless,
@@ -82,9 +94,21 @@ const main = async () => {
           timeout(() => fn(), 0)
         }
       })
+      const params = {
+        widgetsVersion: "9066bb2:1593540614199",
+        origin: "file:///Users/ci7lus/tweet-card.html",
+        embedId: "twitter-widget-0",
+        hideCard: String(hideCard),
+        hideThread: String(hideThread),
+        lang,
+        theme,
+        id: tweetId,
+      }
       await Promise.all([
         page.goto(
-          `https://platform.twitter.com/embed/index.html?hideCard=false&hideThread=false&widgetsVersion=9066bb2%3A1593540614199&lang=en&theme=light&id=${tweetId}`
+          `https://platform.twitter.com/embed/index.html?${querystring.stringify(
+            params
+          )}`
         ),
         page.waitForNavigation({ waitUntil: ["networkidle0"] }),
       ])
@@ -101,10 +125,11 @@ const main = async () => {
       })
       const buffer = await page.screenshot({
         clip: rect,
-        type: mode,
+        type: mode.replace("jpg", "jpeg"),
+        omitBackground: mode === "png",
       })
       ctx.set("Cache-Control", "s-maxage=600, stale-while-revalidate")
-      ctx.type = `image/${mode}`
+      ctx.type = `image/${mode.replace("jpg", "jpeg")}`
       ctx.body = buffer
     } catch (error) {
       console.error(error)
