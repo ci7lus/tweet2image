@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import ReactDOM from "react-dom"
 import { ToastContainer, toast, Slide } from "react-toastify"
+import querystring from "querystring"
 
 const App: React.FC<{}> = () => {
   const [loading, setLoading] = useState(false)
@@ -9,56 +10,83 @@ const App: React.FC<{}> = () => {
   const [loaded, setLoaded] = useState(false)
   const [err, setErr] = useState(null as string | null)
   const [tweetId, setTweetId] = useState(null as string | null)
+  const [imageFormat, setImageFormat] = useState("jpg")
+  const [theme, setTheme] = useState("light")
+  const [lang, setLang] = useState("en")
+  const [scale, setScale] = useState(2)
+  const [hash, setHash] = useState("")
+  const [proceededUrl, setProceededUrl] = useState("")
+
+  const getChangedSetting = () => {
+    const settings: { [key: string]: string | number } = {}
+    if (lang !== "en") settings["lang"] = lang
+    if (theme !== "light") settings["theme"] = theme
+    if (scale !== 2) settings["scale"] = scale
+    return settings
+  }
 
   const getImageUrl = () => {
-    return `${location.protocol}//${location.hostname}/${tweetId}.jpg`
+    const settings = getChangedSetting()
+    if (!!Object.keys(settings).length) {
+      return `${location.protocol}//${
+        location.hostname
+      }/${tweetId}.${imageFormat}?${querystring.stringify(settings)}`
+    }
+    return `${location.protocol}//${location.hostname}/${tweetId}.${imageFormat}`
   }
 
   const getScrapboxSnippet = () => {
-    return `[${getImageUrl()} ${url}]`
+    return `[${getImageUrl()} ${proceededUrl}]`
   }
 
-  const onBlur = async () => {
-    setErr(null)
-    if (0 < url.length) {
-      const m = url.match(/.*twitter.com\/(.+)\/status\/(\d+).*?/)
-      if (m) {
-        if (m[2] === tweetId) return
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (url.length === 0) return
+    const m = url.match(/.*twitter.com\/(.+)\/status\/(\d+).*?/)
+    if (!m) {
+      setErr("The format of the URL is invalid.")
+      return
+    }
 
-        setTweetId(m[2])
+    const stat = [m[2], imageFormat, theme, lang, scale].join("")
+    if (hash === stat) return
+    setHash(stat)
 
-        setLoading(true)
+    setTweetId(m[2])
+    setProceededUrl(url)
+    setLoading(true)
 
-        try {
-          const r = await fetch(`/${m[2]}.jpg`)
-
-          if (!r.ok) {
-            switch (r.status) {
-              case 404:
-                setErr("No tweets found.")
-                break
-              default:
-                setErr(`An error has occurred: ${r.statusText}`)
-                break
-            }
-            setLoading(false)
-            return
-          }
-
-          const blob = await r.blob()
-          const blobUrl = URL.createObjectURL(blob)
-          setBlob(blobUrl)
-
-          setLoading(false)
-          setLoaded(true)
-        } catch (error) {
-          setErr(`An error has occurred.`)
-          setLoading(false)
-          return
-        }
-      } else {
-        setErr("The format of the URL is invalid.")
+    try {
+      let imageUrl = `/${m[2]}.${imageFormat}`
+      const settings = getChangedSetting()
+      if (!!Object.keys(settings).length) {
+        imageUrl = `/${m[2]}.${imageFormat}?${querystring.stringify(settings)}`
       }
+      const r = await fetch(imageUrl)
+
+      if (!r.ok) {
+        switch (r.status) {
+          case 404:
+            setErr("No tweets found.")
+            break
+          default:
+            setErr(`An error has occurred: ${r.statusText}`)
+            break
+        }
+        setLoading(false)
+        return
+      }
+
+      const blob = await r.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      setBlob(blobUrl)
+
+      setLoading(false)
+      setLoaded(true)
+    } catch (error) {
+      setErr(`An error has occurred.`)
+      setLoading(false)
+      return
     }
   }
 
@@ -74,31 +102,175 @@ const App: React.FC<{}> = () => {
         <div className="container mx-auto max-w-screen-md p-4">
           <div className="m-1 text-2xl">tweet-card</div>
           <hr />
+
           <div className="mx-1">
-            <div className="flex flex-wrap mt-2 -mx-3">
-              <div className="w-full px-3">
-                <label className="block tracking-wide text-gray-700 text-base mb-2">
-                  Tweet Url
-                </label>
-                <input
-                  className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                    loading && "bg-gray-200"
-                  }`}
-                  type="text"
-                  placeholder="https://twitter.com/jack/status/20"
-                  value={url}
-                  onChange={(e) => {
-                    setUrl(e.target.value)
-                  }}
-                  onBlur={onBlur}
-                  disabled={loading}
-                />
-                {err && <p className="text-red-500 text-xs pb-2">{err}</p>}
+            <form onSubmit={onSubmit}>
+              <div className="flex flex-wrap mt-2 -mx-3">
+                <div className="w-full px-3">
+                  <label
+                    className="block text-gray-700 text-sm font-bold mb-2"
+                    htmlFor="tweet-url"
+                  >
+                    Tweet Url
+                  </label>
+                  <input
+                    id="tweet-url"
+                    className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
+                      loading && "bg-gray-200"
+                    }`}
+                    type="text"
+                    placeholder="https://twitter.com/jack/status/20"
+                    value={url}
+                    onChange={(e) => {
+                      setUrl(e.target.value)
+                    }}
+                    onBlur={(e) => {
+                      e.target.form.requestSubmit()
+                    }}
+                    disabled={loading}
+                    pattern=".*twitter.com\/(.+)\/status\/(\d+).*?"
+                  />
+                  <div className="-mx-2 mb-2">
+                    <div className="flex flex-row flex-wrap w-full mx-auto">
+                      <div className="w-1/2 px-2 md:w-1/4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="format"
+                        >
+                          Format
+                        </label>
+                        <div className="relative">
+                          <select
+                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
+                              loading && "bg-gray-200"
+                            }`}
+                            id="format"
+                            value={imageFormat}
+                            onBlur={(e) => {
+                              e.target.form.requestSubmit()
+                            }}
+                            onChange={(e) => {
+                              setImageFormat(e.target.value)
+                            }}
+                            disabled={loading}
+                          >
+                            <option value="jpg">JPG</option>
+                            <option value="png">PNG</option>
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg
+                              className="fill-current h-4 w-4"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="w-1/2 px-2 md:w-1/4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="theme"
+                        >
+                          Theme
+                        </label>
+                        <div className="relative">
+                          <select
+                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
+                              loading && "bg-gray-200"
+                            }`}
+                            id="theme"
+                            value={theme}
+                            onBlur={(e) => {
+                              e.target.form.requestSubmit()
+                            }}
+                            onChange={(e) => {
+                              setTheme(e.target.value)
+                            }}
+                            disabled={loading}
+                          >
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg
+                              className="fill-current h-4 w-4"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="w-1/2 px-2 md:w-1/4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="lang"
+                        >
+                          Lang
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="lang"
+                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
+                              loading && "bg-gray-200"
+                            }`}
+                            type="text"
+                            placeholder="en/ja/..."
+                            value={lang}
+                            onChange={(e) => {
+                              setLang(e.target.value.toLowerCase())
+                            }}
+                            onBlur={(e) => {
+                              e.target.form.requestSubmit()
+                            }}
+                            disabled={loading}
+                            maxLength={2}
+                            minLength={2}
+                            pattern="[a-z]{2}"
+                          />
+                        </div>
+                      </div>
+                      <div className="w-1/2 px-2 md:w-1/4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="scale"
+                        >
+                          Scale
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="scale"
+                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
+                              loading && "bg-gray-200"
+                            }`}
+                            type="number"
+                            value={scale}
+                            onChange={(e) => {
+                              const p = parseFloat(e.target.value)
+                              if (Number.isNaN(p)) return
+                              setScale(p)
+                            }}
+                            onBlur={(e) => {
+                              e.target.form.requestSubmit()
+                            }}
+                            disabled={loading}
+                            min={1}
+                            max={5}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {err && <p className="text-red-500 text-xs pb-2">{err}</p>}
+                  </div>
+                </div>
               </div>
-            </div>
+            </form>
 
             {loaded ? (
-              <a href={url} target="_blank" rel="noopener">
+              <a href={proceededUrl} target="_blank" rel="noopener">
                 <div className="relative w-full text-center bg-gray-300 rounded-t">
                   <img className="w-full" src={blob} />
                   <div className="absolute loading-center">
