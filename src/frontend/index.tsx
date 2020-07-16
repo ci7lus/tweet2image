@@ -3,19 +3,20 @@ import ReactDOM from "react-dom"
 import { ToastContainer, toast, Slide } from "react-toastify"
 import querystring from "querystring"
 
+let proceededUrl: string | null = null
+let tweetId: string | null = null
+let hash: string | null = null
+
 const App: React.FC<{}> = () => {
   const [loading, setLoading] = useState(false)
   const [url, setUrl] = useState("")
-  const [blob, setBlob] = useState(null as string | null)
+  const [blob, setBlob] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
-  const [err, setErr] = useState(null as string | null)
-  const [tweetId, setTweetId] = useState(null as string | null)
+  const [err, setErr] = useState<string | null>(null)
   const [imageFormat, setImageFormat] = useState("jpg")
   const [theme, setTheme] = useState("light")
   const [lang, setLang] = useState("en")
   const [scale, setScale] = useState(2)
-  const [hash, setHash] = useState("")
-  const [proceededUrl, setProceededUrl] = useState("")
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
@@ -52,19 +53,22 @@ const App: React.FC<{}> = () => {
       return
     }
 
-    const stat = [m[2], imageFormat, theme, lang, scale].join("")
-    if (hash === stat) return
-    setHash(stat)
+    tweetId = m[2]
 
-    setTweetId(m[2])
-    setProceededUrl(url)
+    const stat = [tweetId, imageFormat, theme, lang, scale].join("")
+    if (hash === stat) return
+    hash = stat
+
+    proceededUrl = `https://twitter.com/${m[1]}/status/${m[2]}`
     setLoading(true)
 
     try {
-      let imageUrl = `/${m[2]}.${imageFormat}`
+      let imageUrl = `/${tweetId}.${imageFormat}`
       const settings = getChangedSetting()
       if (!!Object.keys(settings).length) {
-        imageUrl = `/${m[2]}.${imageFormat}?${querystring.stringify(settings)}`
+        imageUrl = `/${tweetId}.${imageFormat}?${querystring.stringify(
+          settings
+        )}`
       }
       const r = await fetch(imageUrl)
 
