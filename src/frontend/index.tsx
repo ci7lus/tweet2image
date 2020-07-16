@@ -6,6 +6,7 @@ import querystring from "querystring"
 let proceededUrl: string | null = null
 let tweetId: string | null = null
 let hash: string | null = null
+let isNowEditing = false
 
 const App: React.FC<{}> = () => {
   const [loading, setLoading] = useState(false)
@@ -43,6 +44,25 @@ const App: React.FC<{}> = () => {
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     await handleSubmitForm()
+  }
+
+  const onFocus = () => {
+    isNowEditing = true
+  }
+
+  const onBlur = (
+    e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    e.persist()
+    isNowEditing = false
+    setTimeout(async () => {
+      if (isNowEditing || e.target.disabled) return
+      if (e.target.form.requestSubmit) {
+        e.target.form.requestSubmit()
+      } else {
+        await handleSubmitForm()
+      }
+    }, 1000)
   }
 
   const handleSubmitForm = async () => {
@@ -132,13 +152,8 @@ const App: React.FC<{}> = () => {
                     onChange={(e) => {
                       setUrl(e.target.value)
                     }}
-                    onBlur={(e) => {
-                      if (e.target.form.requestSubmit) {
-                        e.target.form.requestSubmit()
-                      } else {
-                        handleSubmitForm()
-                      }
-                    }}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
                     disabled={loading}
                     pattern=".*twitter.com\/(.+)\/status\/(\d+).*?"
                   />
@@ -158,13 +173,8 @@ const App: React.FC<{}> = () => {
                             }`}
                             id="format"
                             value={imageFormat}
-                            onBlur={(e) => {
-                              if (e.target.form.requestSubmit) {
-                                e.target.form.requestSubmit()
-                              } else {
-                                handleSubmitForm()
-                              }
-                            }}
+                            onFocus={onFocus}
+                            onBlur={onBlur}
                             onChange={(e) => {
                               setImageFormat(e.target.value)
                             }}
@@ -198,13 +208,8 @@ const App: React.FC<{}> = () => {
                             }`}
                             id="theme"
                             value={theme}
-                            onBlur={(e) => {
-                              if (e.target.form.requestSubmit) {
-                                e.target.form.requestSubmit()
-                              } else {
-                                handleSubmitForm()
-                              }
-                            }}
+                            onFocus={onFocus}
+                            onBlur={onBlur}
                             onChange={(e) => {
                               setTheme(e.target.value)
                             }}
@@ -243,13 +248,8 @@ const App: React.FC<{}> = () => {
                             onChange={(e) => {
                               setLang(e.target.value.toLowerCase())
                             }}
-                            onBlur={(e) => {
-                              if (e.target.form.requestSubmit) {
-                                e.target.form.requestSubmit()
-                              } else {
-                                handleSubmitForm()
-                              }
-                            }}
+                            onFocus={onFocus}
+                            onBlur={onBlur}
                             disabled={loading}
                             maxLength={2}
                             minLength={2}
@@ -277,13 +277,8 @@ const App: React.FC<{}> = () => {
                               if (Number.isNaN(p)) return
                               setScale(p)
                             }}
-                            onBlur={(e) => {
-                              if (e.target.form.requestSubmit) {
-                                e.target.form.requestSubmit()
-                              } else {
-                                handleSubmitForm()
-                              }
-                            }}
+                            onFocus={onFocus}
+                            onBlur={onBlur}
                             disabled={loading}
                             min={1}
                             max={5}
