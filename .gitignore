@@ -1,3 +1,4 @@
 .now
 .cache
 public
+node_modules
