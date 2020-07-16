@@ -308,7 +308,7 @@ const App: React.FC<{}> = () => {
                 </div>
               </a>
             ) : (
-              <div className="h-full w-full flex-none bg-cover text-center bg-gray-300 rounded-t bg-cover bg-center placeholder-cover">
+              <div className="h-full w-full flex-none bg-cover text-center bg-gray-300 rounded-t bg-center placeholder-cover">
                 <div className="flex items-center justify-center">
                   <div
                     className={`loading ${
@@ -327,7 +327,7 @@ const App: React.FC<{}> = () => {
                 <div className="flex flex-wrap items-stretch w-full mb-4 relative">
                   <input
                     type="text"
-                    className="flex-shrink flex-grow flex-auto leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-200 text-gray-700 border border-gray-200"
+                    className="flex-shrink flex-grow leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-200 text-gray-700 border border-gray-200"
                     value={getImageUrl()}
                     readOnly
                   />
@@ -355,7 +355,7 @@ const App: React.FC<{}> = () => {
                 <div className="flex flex-wrap items-stretch w-full mb-4 relative">
                   <input
                     type="text"
-                    className="flex-shrink flex-grow flex-auto leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-200 text-gray-700 border border-gray-200"
+                    className="flex-shrink flex-grow leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-200 text-gray-700 border border-gray-200"
                     value={getScrapboxSnippet()}
                     readOnly
                   />
@@ -385,7 +385,7 @@ const App: React.FC<{}> = () => {
         </div>
       </div>
 
-      <div className="container mx-auto max-w-screen-md mx-2">
+      <div className="container max-w-screen-md mx-2">
         <hr />
         <div className="flex justify-end text-xs p-4">
           <div className="text-right">

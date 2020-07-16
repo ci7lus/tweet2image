@@ -28,7 +28,7 @@ const main = async () => {
   const router = new Router()
 
   router.use(async (ctx, next) => {
-    if (ctx.request.headers["origin"] != null) {
+    if (ctx.request.headers["origin"] !== null) {
       ctx.set("Access-Control-Allow-Origin", "*")
     }
 
