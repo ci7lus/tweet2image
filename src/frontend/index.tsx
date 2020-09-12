@@ -4,6 +4,9 @@ import { ToastContainer, toast, Slide } from "react-toastify"
 import querystring from "querystring"
 import Select, { StylesConfig } from "react-select"
 import timezones from "timezones.json"
+import $ from "transform-ts"
+
+const gyazoClientId = $.string.transformOrThrow(process.env.GYAZO_CLIENT_ID)
 
 const selectStyle: StylesConfig = {
   control: (previous) => ({
@@ -34,10 +37,12 @@ const languageOptions = languages.map((l) => ({
   label: `${l.local_name} (${l.code})`,
 }))
 
-const timezoneOptions = timezones.map((t) => ({
-  value: t.offset,
-  label: t.text,
-}))
+const timezoneOptions = timezones
+  .filter((t) => t.isdst === false && 0 < t.utc.length)
+  .map((t) => ({
+    value: t.offset,
+    label: t.text,
+  }))
 
 let proceededUrl: string | null = null
 let tweetId: string | null = null
@@ -54,6 +59,9 @@ const App: React.FC<{}> = () => {
   const [lang, setLang] = useState("en")
   const [tz, setTZ] = useState(0)
   const [scale, setScale] = useState(2)
+  const [isGyazoUploading, setIsGyazoUploading] = useState(false)
+  const [gyazoRedirect, setGyazoRedirect] = useState<string | null>(null)
+  const [gyazoSnippet, setGyazoSnippet] = useState<string | null>(null)
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
@@ -118,6 +126,7 @@ const App: React.FC<{}> = () => {
 
     proceededUrl = `https://twitter.com/${m[2] || "twitter"}/status/${tweetId}`
     setLoading(true)
+    setGyazoRedirect(null)
 
     try {
       let imageUrl = `/${tweetId}.${imageFormat}`
@@ -203,6 +212,44 @@ const App: React.FC<{}> = () => {
       }
     }
   }, [])
+
+  const tweetUploadToGyazo = async () => {
+    setIsGyazoUploading(true)
+    toast.info("Uploading to Gyazo...")
+    try {
+      const r = await fetch(blob)
+      const imageData = await r.blob()
+      const base64Img: Blob = await new Promise((res, rej) => {
+        const reader = new FileReader()
+        reader.onerror = rej
+        reader.onload = () => {
+          res((reader.result as any) as Blob)
+        }
+        reader.readAsDataURL(imageData)
+      })
+      const formData = new FormData()
+      formData.append("client_id", gyazoClientId)
+      formData.append("referer_url", proceededUrl)
+      formData.append("image_url", base64Img)
+      const easyAuth = await fetch(
+        `https://upload.gyazo.com/api/upload/easy_auth`,
+        {
+          method: "POST",
+          mode: "cors",
+          body: formData,
+        }
+      )
+      const uploadResult = await easyAuth.json()
+      window.open(uploadResult.get_image_url, "pop", "width=800, height=480")
+      setGyazoRedirect(uploadResult.get_image_url)
+      setGyazoSnippet(`[ ${proceededUrl}]`)
+    } catch (e) {
+      console.error(e)
+      toast.error("Failed to upload to gyazo")
+    } finally {
+      setIsGyazoUploading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen w-full flex flex-col text-gray-800">
@@ -473,6 +520,63 @@ const App: React.FC<{}> = () => {
                       Copy
                     </button>
                   </div>
+                </div>
+                <div className="mx-auto mt-6 mb-2">
+                  <button
+                    className={`flex items-center leading-normal bg-gray-lighter rounded border border-indigo-200 p-2 whitespace-no-wrap text-grey-dark text-sm mx-auto ${
+                      (loading || isGyazoUploading || !!gyazoRedirect) &&
+                      "bg-gray-200 text-gray-400"
+                    }`}
+                    disabled={loading || isGyazoUploading || !!gyazoRedirect}
+                    onClick={tweetUploadToGyazo}
+                  >
+                    Upload to Gyazo📸
+                  </button>
+                  {gyazoRedirect && (
+                    <div>
+                      <label className="block tracking-wide text-gray-600 text-sm my-2">
+                        Scrapbox Snippet
+                      </label>
+                      <div className="flex flex-wrap items-stretch w-full mb-1 relative">
+                        <input
+                          type="text"
+                          className="flex-shrink flex-grow leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-100 text-gray-700 border border-gray-200"
+                          value={gyazoSnippet}
+                          onChange={(e) => setGyazoSnippet(e.target.value)}
+                        />
+                        <div className="flex -mr-px">
+                          <button
+                            className="flex items-center leading-normal bg-grey-lighter rounded rounded-l-none border border-l-0 border-grey-light px-3 whitespace-no-wrap text-grey-dark text-sm"
+                            onClick={async () => {
+                              try {
+                                if (navigator.clipboard) {
+                                  await navigator.clipboard.writeText(
+                                    gyazoSnippet
+                                  )
+                                  toast.info("copied.")
+                                }
+                              } catch (e) {
+                                console.error(e)
+                              }
+                            }}
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        To complete this snippet, paste{" "}
+                        <a
+                          className="text-blue-400"
+                          href={gyazoRedirect}
+                          target="_blank"
+                        >
+                          the URL of the Gyazo page
+                        </a>{" "}
+                        opened on the popup to in the text box above.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

@@ -32,7 +32,8 @@
     "koa": "^2.13.0",
     "koa-router": "^9.1.0",
     "puppeteer-core": "^4.0.1",
-    "timezones.json": "^1.5.2"
+    "timezones.json": "^1.5.2",
+    "transform-ts": "^0.3.0"
   },
   "scripts": {
     "dev": "ts-node src/index.ts",

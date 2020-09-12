@@ -18,6 +18,12 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "GYAZO_CLIENT_ID": "e2bd725244baa768eb100126fa2cd85910445778a25ba7ef1328608750b070d5"
+  },
+  "build": {
+    "env": {
+      "GYAZO_CLIENT_ID": "e2bd725244baa768eb100126fa2cd85910445778a25ba7ef1328608750b070d5"
+    }
   }
 }
