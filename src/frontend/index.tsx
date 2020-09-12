@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import ReactDOM from "react-dom"
 import { ToastContainer, toast, Slide } from "react-toastify"
 import querystring from "querystring"
@@ -14,10 +14,30 @@ const selectStyle: StylesConfig = {
   }),
 }
 
+const imageFormats = [
+  { value: "jpg", label: "JPG" },
+  { value: "png", label: "PNG" },
+]
+
+const themes = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+]
+
 const languages: {
   code: string
   local_name: string
 }[] = require("../../languages.json")
+
+const languageOptions = languages.map((l) => ({
+  value: l.code,
+  label: `${l.local_name} (${l.code})`,
+}))
+
+const timezoneOptions = timezones.map((t) => ({
+  value: t.offset,
+  label: t.text,
+}))
 
 let proceededUrl: string | null = null
 let tweetId: string | null = null
@@ -32,13 +52,13 @@ const App: React.FC<{}> = () => {
   const [imageFormat, setImageFormat] = useState("jpg")
   const [theme, setTheme] = useState("light")
   const [lang, setLang] = useState("en")
-  const [timezone, setTimezone] = useState(0)
+  const [tz, setTZ] = useState(0)
   const [scale, setScale] = useState(2)
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
     if (lang !== "en") settings["lang"] = lang
-    if (timezone !== 0) settings["tz"] = timezone
+    if (tz !== 0) settings["tz"] = tz
     if (theme !== "light") settings["theme"] = theme
     if (scale !== 2) settings["scale"] = scale
     return settings
@@ -92,7 +112,7 @@ const App: React.FC<{}> = () => {
 
     tweetId = m[3]
 
-    const stat = [tweetId, imageFormat, theme, lang, scale, timezone].join("")
+    const stat = [tweetId, imageFormat, theme, lang, scale, tz].join("")
     if (hash === stat) return
     hash = stat
 
@@ -134,6 +154,55 @@ const App: React.FC<{}> = () => {
       return
     }
   }
+
+  useEffect(() => {
+    const parsed = new URLSearchParams(location.hash.slice(1))
+    if (parsed.has("url")) {
+      setUrl(parsed.get("url"))
+    }
+    if (parsed.has("format")) {
+      const format = parsed.get("format")
+      if (["jpg", "png"].includes(format)) {
+        setImageFormat(format)
+      }
+    }
+    if (parsed.has("theme")) {
+      const theme = parsed.get("theme")
+      if (["light", "dark"].includes(theme)) {
+        setTheme(theme)
+      }
+    }
+    if (parsed.has("scale")) {
+      const scale = parseInt(parsed.get("scale"))
+      if (!Number.isNaN(scale)) {
+        setScale(scale)
+      }
+    }
+    if (parsed.has("lang")) {
+      const lang = parsed.get("lang")
+      if (languages.find((l) => l.code === lang)) {
+        setLang(lang)
+      }
+    }
+    if (parsed.has("tz")) {
+      const tz = parseInt(parsed.get("tz"))
+      if (!Number.isNaN(tz) && timezones.find((t) => t.offset === tz)) {
+        setTZ(tz)
+      }
+    }
+    if (0 < Array.from(parsed.entries()).length) {
+      const url = document.querySelector(
+        "input#tweet-url"
+      ) as HTMLInputElement | null
+      if (!url) return
+      if (isNowEditing || url.disabled) return
+      if (url.form.requestSubmit) {
+        setTimeout(() => url.form.requestSubmit(), 0)
+      } else {
+        handleSubmitForm()
+      }
+    }
+  }, [])
 
   return (
     <div className="min-h-screen w-full flex flex-col text-gray-800">
@@ -187,10 +256,7 @@ const App: React.FC<{}> = () => {
                         </label>
                         <div className="relative">
                           <Select
-                            options={[
-                              { value: "jpg", label: "JPG" },
-                              { value: "png", label: "PNG" },
-                            ]}
+                            options={imageFormats}
                             styles={selectStyle}
                             onChange={(value, action) => {
                               setImageFormat((value as { value: string }).value)
@@ -199,7 +265,12 @@ const App: React.FC<{}> = () => {
                             onBlur={onBlur}
                             onFocus={onFocus}
                             isDisabled={loading}
-                            defaultValue={{ value: "jpg", label: "JPG" }}
+                            defaultValue={imageFormats.find(
+                              (f) => f.value === imageFormat
+                            )}
+                            value={imageFormats.find(
+                              (f) => f.value === imageFormat
+                            )}
                             filterOption={() => true}
                           />
                         </div>
@@ -213,10 +284,7 @@ const App: React.FC<{}> = () => {
                         </label>
                         <div className="relative">
                           <Select
-                            options={[
-                              { value: "light", label: "Light" },
-                              { value: "dark", label: "Dark" },
-                            ]}
+                            options={themes}
                             styles={selectStyle}
                             onChange={(value, action) => {
                               setTheme((value as { value: string }).value)
@@ -225,7 +293,8 @@ const App: React.FC<{}> = () => {
                             onBlur={onBlur}
                             onFocus={onFocus}
                             isDisabled={loading}
-                            defaultValue={{ value: "light", label: "Light" }}
+                            value={themes.find((t) => t.value === theme)}
+                            defaultValue={themes.find((t) => t.value === theme)}
                             filterOption={() => true}
                           />
                         </div>
@@ -269,10 +338,7 @@ const App: React.FC<{}> = () => {
                         </label>
                         <div className="relative">
                           <Select
-                            options={languages.map((l) => ({
-                              value: l.code,
-                              label: `${l.local_name} (${l.code})`,
-                            }))}
+                            options={languageOptions}
                             styles={selectStyle}
                             onChange={(value, action) => {
                               setLang((value as { value: string }).value)
@@ -281,10 +347,12 @@ const App: React.FC<{}> = () => {
                             onBlur={onBlur}
                             onFocus={onFocus}
                             isDisabled={loading}
-                            defaultValue={{
-                              value: "en",
-                              label: "English (en)",
-                            }}
+                            defaultValue={languageOptions.find(
+                              (l) => l.value === lang
+                            )}
+                            value={languageOptions.find(
+                              (l) => l.value === lang
+                            )}
                           />
                         </div>
                       </div>
@@ -297,22 +365,19 @@ const App: React.FC<{}> = () => {
                         </label>
                         <div className="relative">
                           <Select
-                            options={timezones.map((t) => ({
-                              value: t.offset,
-                              label: t.text,
-                            }))}
+                            options={timezoneOptions}
                             styles={selectStyle}
                             onChange={(value, action) => {
-                              setTimezone((value as { value: number }).value)
+                              setTZ((value as { value: number }).value)
                             }}
                             id="timezone"
                             onBlur={onBlur}
                             onFocus={onFocus}
                             isDisabled={loading}
-                            defaultValue={{
-                              value: 0,
-                              label: "(UTC) Coordinated Universal Time",
-                            }}
+                            defaultValue={timezoneOptions.find(
+                              (t) => t.value === tz
+                            )}
+                            value={timezoneOptions.find((t) => t.value === tz)}
                           />
                         </div>
                       </div>
