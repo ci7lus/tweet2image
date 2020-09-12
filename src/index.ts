@@ -3,6 +3,7 @@ import chromium from "chrome-aws-lambda"
 import Router from "koa-router"
 import axios from "axios"
 import querystring from "querystring"
+import timezones from "timezones.json"
 
 const port = process.env.PORT || "5000"
 
@@ -28,9 +29,7 @@ const main = async () => {
   const router = new Router()
 
   router.use(async (ctx, next) => {
-    if (ctx.request.headers["origin"] != null) {
-      ctx.set("Access-Control-Allow-Origin", "*")
-    }
+    ctx.set("Access-Control-Allow-Origin", "*")
 
     await next()
   })
@@ -41,11 +40,14 @@ const main = async () => {
 
   router.get(/(\d+)\.(png|jpg)/, async (ctx) => {
     const lang = ctx.query.lang || "en"
-    if (!lang.match(/[a-z]{2}/)) return ctx.throw(400)
+    if (!lang.match(/^[a-z-]{2,5}$/)) return ctx.throw(400, "lang")
+    const tz = timezones.find((t) => t.offset === parseInt(ctx.query.tz || "0"))
+    if (!tz) return ctx.throw(400, "tz")
     const theme = ctx.query.theme || "light"
-    if (!theme.match(/[a-z]+/)) return ctx.throw(400)
+    if (!theme.match(/^[a-z]+$/)) return ctx.throw(400, "theme")
     const scale = parseFloat(ctx.query.scale || "2")
-    if (Number.isNaN(scale) || scale < 1 || 5 < scale) return ctx.throw(400)
+    if (Number.isNaN(scale) || scale < 1 || 5 < scale)
+      return ctx.throw(400, "scale")
     const hideCard =
       parseInt(ctx.query.hideCard || "0") === 1 || ctx.query.hideCard === "true"
     const hideThread =
@@ -53,9 +55,9 @@ const main = async () => {
       ctx.query.hideThread === "true"
     const tweetId = ctx.params[0]
     const mode = ctx.params[1]
-    if (!["png", "jpg"].includes(mode)) return ctx.throw(400)
+    if (!["png", "jpg"].includes(mode)) return ctx.throw(400, "mode")
     const parsedTweetId = parseInt(tweetId)
-    if (Number.isNaN(parsedTweetId)) return ctx.throw(400)
+    if (Number.isNaN(parsedTweetId)) return ctx.throw(400, "number")
     const r = await axios.head(
       `https://twitter.com/twitter/status/${tweetId}`,
       {
@@ -72,6 +74,9 @@ const main = async () => {
     await chromium.font(
       "https://rawcdn.githack.com/googlefonts/noto-fonts/ea9154f9a0947972baa772bc6744f1ec50007575/hinted/NotoSans/NotoSans-Regular.ttf"
     )
+
+    const tzString = tz?.utc.pop()
+
     const browser = await chromium.puppeteer.launch({
       args: chromium.args,
       defaultViewport: {
@@ -80,6 +85,10 @@ const main = async () => {
       },
       executablePath: await chromium.executablePath,
       headless: chromium.headless,
+      env: {
+        ...process.env,
+        TZ: tzString ? tzString : "Etc/GMT",
+      },
     })
 
     try {

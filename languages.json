@@ -1,0 +1,331 @@
+[
+  {
+    "code": "fr",
+    "name": "フランス語",
+    "local_name": "français",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "en",
+    "name": "英語",
+    "local_name": "English",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "ar",
+    "name": "アラビア語",
+    "local_name": "العربية",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "ja",
+    "name": "日本語",
+    "local_name": "日本語",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "es",
+    "name": "スペイン語",
+    "local_name": "español",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "de",
+    "name": "ドイツ語",
+    "local_name": "Deutsch",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "it",
+    "name": "イタリア語",
+    "local_name": "italiano",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "id",
+    "name": "インドネシア語",
+    "local_name": "Indonesia",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "pt",
+    "name": "ポルトガル語",
+    "local_name": "português",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "ko",
+    "name": "韓国語",
+    "local_name": "한국어",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "tr",
+    "name": "トルコ語",
+    "local_name": "Türkçe",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "ru",
+    "name": "ロシア語",
+    "local_name": "русский",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "nl",
+    "name": "オランダ語",
+    "local_name": "Nederlands",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "fil",
+    "name": "フィリピノ語",
+    "local_name": "Filipino",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "msa",
+    "name": "マレー語",
+    "local_name": "Melayu",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "zh-tw",
+    "name": "繁体中国語",
+    "local_name": "繁體中文",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "zh-cn",
+    "name": "簡体中国語",
+    "local_name": "简体中文",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "hi",
+    "name": "ヒンディー語",
+    "local_name": "हिन्दी",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "no",
+    "name": "ノルウェー語",
+    "local_name": "norsk",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "sv",
+    "name": "スウェーデン語",
+    "local_name": "svenska",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "fi",
+    "name": "フィンランド語",
+    "local_name": "suomi",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "da",
+    "name": "デンマーク語",
+    "local_name": "dansk",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "pl",
+    "name": "ポーランド語",
+    "local_name": "polski",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "hu",
+    "name": "ハンガリー語",
+    "local_name": "magyar",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "fa",
+    "name": "ペルシア語",
+    "local_name": "فارسی",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "he",
+    "name": "ヘブライ語",
+    "local_name": "עברית",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "ur",
+    "name": "ウルドゥー語",
+    "local_name": "اردو",
+    "status": "beta",
+    "debug": false
+  },
+  {
+    "code": "th",
+    "name": "タイ語",
+    "local_name": "ไทย",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "uk",
+    "name": "ウクライナ語",
+    "local_name": "українська",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "ca",
+    "name": "カタロニア語",
+    "local_name": "català",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "ga",
+    "name": "アイルランド語",
+    "local_name": "Gaeilge",
+    "status": "beta",
+    "debug": false
+  },
+  {
+    "code": "el",
+    "name": "ギリシャ語",
+    "local_name": "Ελληνικά",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "eu",
+    "name": "バスク語",
+    "local_name": "euskara",
+    "status": "beta",
+    "debug": false
+  },
+  {
+    "code": "cs",
+    "name": "チェコ語",
+    "local_name": "čeština",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "gl",
+    "name": "ガリシア語",
+    "local_name": "galego",
+    "status": "beta",
+    "debug": false
+  },
+  {
+    "code": "ro",
+    "name": "ルーマニア語",
+    "local_name": "română",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "hr",
+    "name": "クロアチア語",
+    "local_name": "hrvatski",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "en-gb",
+    "name": "イギリス英語",
+    "local_name": "British English",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "vi",
+    "name": "ベトナム語",
+    "local_name": "Tiếng Việt",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "bn",
+    "name": "ベンガル語",
+    "local_name": "বাংলা",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "bg",
+    "name": "ブルガリア語",
+    "local_name": "български",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "sr",
+    "name": "セルビア語",
+    "local_name": "српски",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "sk",
+    "name": "スロバキア語",
+    "local_name": "slovenčina",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "gu",
+    "name": "グジャラート語",
+    "local_name": "ગુજરાતી",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "mr",
+    "name": "マラーティー語",
+    "local_name": "मराठी",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "ta",
+    "name": "タミル語",
+    "local_name": "தமிழ்",
+    "status": "production",
+    "debug": false
+  },
+  {
+    "code": "kn",
+    "name": "カンナダ語",
+    "local_name": "ಕನ್ನಡ",
+    "status": "production",
+    "debug": false
+  }
+]

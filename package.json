@@ -11,6 +11,7 @@
     "@types/puppeteer": "^3.0.1",
     "@types/react": "^16.9.41",
     "@types/react-dom": "^16.9.8",
+    "@types/react-select": "^3.0.19",
     "autoprefixer": "^9.8.4",
     "koa-static-server": "^1.5.2",
     "parcel-bundler": "^1.12.4",
@@ -19,6 +20,7 @@
     "puppeteer": "^4.0.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-select": "^3.1.0",
     "react-toastify": "^6.0.6",
     "tailwindcss": "^1.4.6",
     "ts-node": "^8.10.2",
@@ -29,7 +31,9 @@
     "chrome-aws-lambda": "^3.1.1",
     "koa": "^2.13.0",
     "koa-router": "^9.1.0",
-    "puppeteer-core": "^4.0.1"
+    "puppeteer-core": "^4.0.1",
+    "timezones.json": "^1.5.2",
+    "transform-ts": "^0.3.0"
   },
   "scripts": {
     "dev": "ts-node src/index.ts",

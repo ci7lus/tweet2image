@@ -1,7 +1,48 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import ReactDOM from "react-dom"
 import { ToastContainer, toast, Slide } from "react-toastify"
 import querystring from "querystring"
+import Select, { StylesConfig } from "react-select"
+import timezones from "timezones.json"
+import $ from "transform-ts"
+
+const gyazoClientId = $.string.transformOrThrow(process.env.GYAZO_CLIENT_ID)
+
+const selectStyle: StylesConfig = {
+  control: (previous) => ({
+    ...previous,
+    height: 46,
+    backgroundColor: "#f7fafc",
+    borderColor: "#edf2f7",
+  }),
+}
+
+const imageFormats = [
+  { value: "jpg", label: "JPG" },
+  { value: "png", label: "PNG" },
+]
+
+const themes = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+]
+
+const languages: {
+  code: string
+  local_name: string
+}[] = require("../../languages.json")
+
+const languageOptions = languages.map((l) => ({
+  value: l.code,
+  label: `${l.local_name} (${l.code})`,
+}))
+
+const timezoneOptions = timezones
+  .filter((t) => t.isdst === false && 0 < t.utc.length)
+  .map((t) => ({
+    value: t.offset,
+    label: t.text,
+  }))
 
 let proceededUrl: string | null = null
 let tweetId: string | null = null
@@ -13,15 +54,19 @@ const App: React.FC<{}> = () => {
   const [url, setUrl] = useState("")
   const [blob, setBlob] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
   const [imageFormat, setImageFormat] = useState("jpg")
   const [theme, setTheme] = useState("light")
   const [lang, setLang] = useState("en")
+  const [tz, setTZ] = useState(0)
   const [scale, setScale] = useState(2)
+  const [isGyazoUploading, setIsGyazoUploading] = useState(false)
+  const [gyazoRedirect, setGyazoRedirect] = useState<string | null>(null)
+  const [gyazoSnippet, setGyazoSnippet] = useState<string | null>(null)
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
     if (lang !== "en") settings["lang"] = lang
+    if (tz !== 0) settings["tz"] = tz
     if (theme !== "light") settings["theme"] = theme
     if (scale !== 2) settings["scale"] = scale
     return settings
@@ -67,20 +112,21 @@ const App: React.FC<{}> = () => {
 
   const handleSubmitForm = async () => {
     if (url.length === 0) return
-    const m = url.match(/.*twitter.com\/(.+)\/status\/(\d+).*?/)
+    const m = url.match(/(twitter.com\/(.+)\/status\/)?(\d+)/)
     if (!m) {
-      setErr("The format of the URL is invalid.")
+      toast.error("The format of the URL is invalid.")
       return
     }
 
-    tweetId = m[2]
+    tweetId = m[3]
 
-    const stat = [tweetId, imageFormat, theme, lang, scale].join("")
+    const stat = [tweetId, imageFormat, theme, lang, scale, tz].join("")
     if (hash === stat) return
     hash = stat
 
-    proceededUrl = `https://twitter.com/${m[1]}/status/${m[2]}`
+    proceededUrl = `https://twitter.com/${m[2] || "twitter"}/status/${tweetId}`
     setLoading(true)
+    setGyazoRedirect(null)
 
     try {
       let imageUrl = `/${tweetId}.${imageFormat}`
@@ -95,10 +141,10 @@ const App: React.FC<{}> = () => {
       if (!r.ok) {
         switch (r.status) {
           case 404:
-            setErr("No tweets found.")
+            toast.error("No tweets found.")
             break
           default:
-            setErr(`An error has occurred: ${r.statusText}`)
+            toast.error(`An error has occurred: ${r.statusText}`)
             break
         }
         setLoading(false)
@@ -112,9 +158,96 @@ const App: React.FC<{}> = () => {
       setLoading(false)
       setLoaded(true)
     } catch (error) {
-      setErr(`An error has occurred.`)
+      toast.error(`An error has occurred.`)
       setLoading(false)
       return
+    }
+  }
+
+  useEffect(() => {
+    const parsed = new URLSearchParams(location.hash.slice(1))
+    if (parsed.has("url")) {
+      setUrl(parsed.get("url"))
+    }
+    if (parsed.has("format")) {
+      const format = parsed.get("format")
+      if (["jpg", "png"].includes(format)) {
+        setImageFormat(format)
+      }
+    }
+    if (parsed.has("theme")) {
+      const theme = parsed.get("theme")
+      if (["light", "dark"].includes(theme)) {
+        setTheme(theme)
+      }
+    }
+    if (parsed.has("scale")) {
+      const scale = parseInt(parsed.get("scale"))
+      if (!Number.isNaN(scale)) {
+        setScale(scale)
+      }
+    }
+    if (parsed.has("lang")) {
+      const lang = parsed.get("lang")
+      if (languages.find((l) => l.code === lang)) {
+        setLang(lang)
+      }
+    }
+    if (parsed.has("tz")) {
+      const tz = parseInt(parsed.get("tz"))
+      if (!Number.isNaN(tz) && timezones.find((t) => t.offset === tz)) {
+        setTZ(tz)
+      }
+    }
+    if (0 < Array.from(parsed.entries()).length) {
+      const url = document.querySelector(
+        "input#tweet-url"
+      ) as HTMLInputElement | null
+      if (!url) return
+      if (isNowEditing || url.disabled) return
+      if (url.form.requestSubmit) {
+        setTimeout(() => url.form.requestSubmit(), 0)
+      } else {
+        handleSubmitForm()
+      }
+    }
+  }, [])
+
+  const tweetUploadToGyazo = async () => {
+    setIsGyazoUploading(true)
+    toast.info("Uploading to Gyazo...")
+    try {
+      const r = await fetch(blob)
+      const imageData = await r.blob()
+      const base64Img: Blob = await new Promise((res, rej) => {
+        const reader = new FileReader()
+        reader.onerror = rej
+        reader.onload = () => {
+          res((reader.result as any) as Blob)
+        }
+        reader.readAsDataURL(imageData)
+      })
+      const formData = new FormData()
+      formData.append("client_id", gyazoClientId)
+      formData.append("referer_url", proceededUrl)
+      formData.append("image_url", base64Img)
+      const easyAuth = await fetch(
+        `https://upload.gyazo.com/api/upload/easy_auth`,
+        {
+          method: "POST",
+          mode: "cors",
+          body: formData,
+        }
+      )
+      const uploadResult = await easyAuth.json()
+      window.open(uploadResult.get_image_url, "pop", "width=800, height=480")
+      setGyazoRedirect(uploadResult.get_image_url)
+      setGyazoSnippet(`[ ${proceededUrl}]`)
+    } catch (e) {
+      console.error(e)
+      toast.error("Failed to upload to gyazo")
+    } finally {
+      setIsGyazoUploading(false)
     }
   }
 
@@ -134,7 +267,7 @@ const App: React.FC<{}> = () => {
           <div className="mx-1">
             <form onSubmit={onSubmit}>
               <div className="flex flex-wrap mt-2 -mx-3">
-                <div className="w-full px-3">
+                <div className="w-full px-3 pb-2">
                   <label
                     className="block text-gray-700 text-sm font-bold mb-2"
                     htmlFor="tweet-url"
@@ -143,11 +276,13 @@ const App: React.FC<{}> = () => {
                   </label>
                   <input
                     id="tweet-url"
-                    className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                      loading && "bg-gray-200"
+                    className={`appearance-none block w-full border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
+                      loading
+                        ? "bg-gray-200 text-gray-400"
+                        : "bg-gray-100 text-gray-700"
                     }`}
                     type="text"
-                    placeholder="https://twitter.com/jack/status/20"
+                    placeholder="https://twitter.com/jack/status/20 or 20"
                     value={url}
                     onChange={(e) => {
                       setUrl(e.target.value)
@@ -155,11 +290,11 @@ const App: React.FC<{}> = () => {
                     onFocus={onFocus}
                     onBlur={onBlur}
                     disabled={loading}
-                    pattern=".*twitter.com\/(.+)\/status\/(\d+).*?"
+                    pattern=".*(\d+).*"
                   />
                   <div className="-mx-2 mb-2">
                     <div className="flex flex-row flex-wrap w-full mx-auto">
-                      <div className="w-1/2 px-2 md:w-1/4">
+                      <div className="w-1/3 px-2">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="format"
@@ -167,34 +302,27 @@ const App: React.FC<{}> = () => {
                           Format
                         </label>
                         <div className="relative">
-                          <select
-                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                              loading && "bg-gray-200"
-                            }`}
-                            id="format"
-                            value={imageFormat}
-                            onFocus={onFocus}
-                            onBlur={onBlur}
-                            onChange={(e) => {
-                              setImageFormat(e.target.value)
+                          <Select
+                            options={imageFormats}
+                            styles={selectStyle}
+                            onChange={(value, action) => {
+                              setImageFormat((value as { value: string }).value)
                             }}
-                            disabled={loading}
-                          >
-                            <option value="jpg">JPG</option>
-                            <option value="png">PNG</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg
-                              className="fill-current h-4 w-4"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                            </svg>
-                          </div>
+                            id="format"
+                            onBlur={onBlur}
+                            onFocus={onFocus}
+                            isDisabled={loading}
+                            defaultValue={imageFormats.find(
+                              (f) => f.value === imageFormat
+                            )}
+                            value={imageFormats.find(
+                              (f) => f.value === imageFormat
+                            )}
+                            filterOption={() => true}
+                          />
                         </div>
                       </div>
-                      <div className="w-1/2 px-2 md:w-1/4">
+                      <div className="w-1/3 px-2">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="theme"
@@ -202,62 +330,23 @@ const App: React.FC<{}> = () => {
                           Theme
                         </label>
                         <div className="relative">
-                          <select
-                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                              loading && "bg-gray-200"
-                            }`}
+                          <Select
+                            options={themes}
+                            styles={selectStyle}
+                            onChange={(value, action) => {
+                              setTheme((value as { value: string }).value)
+                            }}
                             id="theme"
-                            value={theme}
-                            onFocus={onFocus}
                             onBlur={onBlur}
-                            onChange={(e) => {
-                              setTheme(e.target.value)
-                            }}
-                            disabled={loading}
-                          >
-                            <option value="light">Light</option>
-                            <option value="dark">Dark</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg
-                              className="fill-current h-4 w-4"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="w-1/2 px-2 md:w-1/4">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="lang"
-                        >
-                          Lang
-                        </label>
-                        <div className="relative">
-                          <input
-                            id="lang"
-                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                              loading && "bg-gray-200"
-                            }`}
-                            type="text"
-                            placeholder="en/ja/..."
-                            value={lang}
-                            onChange={(e) => {
-                              setLang(e.target.value.toLowerCase())
-                            }}
                             onFocus={onFocus}
-                            onBlur={onBlur}
-                            disabled={loading}
-                            maxLength={2}
-                            minLength={2}
-                            pattern="[a-z]{2}"
+                            isDisabled={loading}
+                            value={themes.find((t) => t.value === theme)}
+                            defaultValue={themes.find((t) => t.value === theme)}
+                            filterOption={() => true}
                           />
                         </div>
                       </div>
-                      <div className="w-1/2 px-2 md:w-1/4">
+                      <div className="w-1/3 px-2">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="scale"
@@ -267,8 +356,10 @@ const App: React.FC<{}> = () => {
                         <div className="relative">
                           <input
                             id="scale"
-                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                              loading && "bg-gray-200"
+                            className={`appearance-none block w-full border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
+                              loading
+                                ? "bg-gray-200 text-gray-400"
+                                : "bg-gray-100 text-gray-700"
                             }`}
                             type="number"
                             value={scale}
@@ -285,8 +376,59 @@ const App: React.FC<{}> = () => {
                           />
                         </div>
                       </div>
+                      <div className="w-1/2 px-2">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="lang"
+                        >
+                          Lang
+                        </label>
+                        <div className="relative">
+                          <Select
+                            options={languageOptions}
+                            styles={selectStyle}
+                            onChange={(value, action) => {
+                              setLang((value as { value: string }).value)
+                            }}
+                            id="lang"
+                            onBlur={onBlur}
+                            onFocus={onFocus}
+                            isDisabled={loading}
+                            defaultValue={languageOptions.find(
+                              (l) => l.value === lang
+                            )}
+                            value={languageOptions.find(
+                              (l) => l.value === lang
+                            )}
+                          />
+                        </div>
+                      </div>
+                      <div className="w-1/2 px-2">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="timezone"
+                        >
+                          Timezone
+                        </label>
+                        <div className="relative">
+                          <Select
+                            options={timezoneOptions}
+                            styles={selectStyle}
+                            onChange={(value, action) => {
+                              setTZ((value as { value: number }).value)
+                            }}
+                            id="timezone"
+                            onBlur={onBlur}
+                            onFocus={onFocus}
+                            isDisabled={loading}
+                            defaultValue={timezoneOptions.find(
+                              (t) => t.value === tz
+                            )}
+                            value={timezoneOptions.find((t) => t.value === tz)}
+                          />
+                        </div>
+                      </div>
                     </div>
-                    {err && <p className="text-red-500 text-xs pb-2">{err}</p>}
                   </div>
                 </div>
               </div>
@@ -308,7 +450,7 @@ const App: React.FC<{}> = () => {
                 </div>
               </a>
             ) : (
-              <div className="h-full w-full flex-none bg-cover text-center bg-gray-300 rounded-t bg-cover bg-center placeholder-cover">
+              <div className="h-full w-full flex-none bg-cover text-center bg-gray-300 rounded-t bg-center placeholder-cover">
                 <div className="flex items-center justify-center">
                   <div
                     className={`loading ${
@@ -327,7 +469,7 @@ const App: React.FC<{}> = () => {
                 <div className="flex flex-wrap items-stretch w-full mb-4 relative">
                   <input
                     type="text"
-                    className="flex-shrink flex-grow flex-auto leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-200 text-gray-700 border border-gray-200"
+                    className="flex-shrink flex-grow leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-200 text-gray-700 border border-gray-200"
                     value={getImageUrl()}
                     readOnly
                   />
@@ -355,7 +497,7 @@ const App: React.FC<{}> = () => {
                 <div className="flex flex-wrap items-stretch w-full mb-4 relative">
                   <input
                     type="text"
-                    className="flex-shrink flex-grow flex-auto leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-200 text-gray-700 border border-gray-200"
+                    className="flex-shrink flex-grow leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-200 text-gray-700 border border-gray-200"
                     value={getScrapboxSnippet()}
                     readOnly
                   />
@@ -379,13 +521,70 @@ const App: React.FC<{}> = () => {
                     </button>
                   </div>
                 </div>
+                <div className="mx-auto mt-6 mb-2">
+                  <button
+                    className={`flex items-center leading-normal bg-gray-lighter rounded border border-indigo-200 p-2 whitespace-no-wrap text-grey-dark text-sm mx-auto ${
+                      (loading || isGyazoUploading || !!gyazoRedirect) &&
+                      "bg-gray-200 text-gray-400"
+                    }`}
+                    disabled={loading || isGyazoUploading || !!gyazoRedirect}
+                    onClick={tweetUploadToGyazo}
+                  >
+                    Upload to Gyazo📸
+                  </button>
+                  {gyazoRedirect && (
+                    <div>
+                      <label className="block tracking-wide text-gray-600 text-sm my-2">
+                        Scrapbox Snippet
+                      </label>
+                      <div className="flex flex-wrap items-stretch w-full mb-1 relative">
+                        <input
+                          type="text"
+                          className="flex-shrink flex-grow leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-100 text-gray-700 border border-gray-200"
+                          value={gyazoSnippet}
+                          onChange={(e) => setGyazoSnippet(e.target.value)}
+                        />
+                        <div className="flex -mr-px">
+                          <button
+                            className="flex items-center leading-normal bg-grey-lighter rounded rounded-l-none border border-l-0 border-grey-light px-3 whitespace-no-wrap text-grey-dark text-sm"
+                            onClick={async () => {
+                              try {
+                                if (navigator.clipboard) {
+                                  await navigator.clipboard.writeText(
+                                    gyazoSnippet
+                                  )
+                                  toast.info("copied.")
+                                }
+                              } catch (e) {
+                                console.error(e)
+                              }
+                            }}
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        To complete this snippet, paste{" "}
+                        <a
+                          className="text-blue-400"
+                          href={gyazoRedirect}
+                          target="_blank"
+                        >
+                          the URL of the Gyazo page
+                        </a>{" "}
+                        opened on the popup to in the text box above.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto max-w-screen-md mx-2">
+      <div className="container max-w-screen-md mx-auto mx-2">
         <hr />
         <div className="flex justify-end text-xs p-4">
           <div className="text-right">
