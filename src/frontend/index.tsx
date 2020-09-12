@@ -2,6 +2,22 @@ import React, { useState } from "react"
 import ReactDOM from "react-dom"
 import { ToastContainer, toast, Slide } from "react-toastify"
 import querystring from "querystring"
+import Select, { StylesConfig } from "react-select"
+import timezones from "timezones.json"
+
+const selectStyle: StylesConfig = {
+  control: (previous) => ({
+    ...previous,
+    height: 46,
+    backgroundColor: "#f7fafc",
+    borderColor: "#edf2f7",
+  }),
+}
+
+const languages: {
+  code: string
+  local_name: string
+}[] = require("../../languages.json")
 
 let proceededUrl: string | null = null
 let tweetId: string | null = null
@@ -13,15 +29,16 @@ const App: React.FC<{}> = () => {
   const [url, setUrl] = useState("")
   const [blob, setBlob] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
   const [imageFormat, setImageFormat] = useState("jpg")
   const [theme, setTheme] = useState("light")
   const [lang, setLang] = useState("en")
+  const [timezone, setTimezone] = useState(0)
   const [scale, setScale] = useState(2)
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
     if (lang !== "en") settings["lang"] = lang
+    if (timezone !== 0) settings["tz"] = timezone
     if (theme !== "light") settings["theme"] = theme
     if (scale !== 2) settings["scale"] = scale
     return settings
@@ -67,19 +84,19 @@ const App: React.FC<{}> = () => {
 
   const handleSubmitForm = async () => {
     if (url.length === 0) return
-    const m = url.match(/.*twitter.com\/(.+)\/status\/(\d+).*?/)
+    const m = url.match(/(twitter.com\/(.+)\/status\/)?(\d+)/)
     if (!m) {
-      setErr("The format of the URL is invalid.")
+      toast.error("The format of the URL is invalid.")
       return
     }
 
-    tweetId = m[2]
+    tweetId = m[3]
 
-    const stat = [tweetId, imageFormat, theme, lang, scale].join("")
+    const stat = [tweetId, imageFormat, theme, lang, scale, timezone].join("")
     if (hash === stat) return
     hash = stat
 
-    proceededUrl = `https://twitter.com/${m[1]}/status/${m[2]}`
+    proceededUrl = `https://twitter.com/${m[2] || "twitter"}/status/${tweetId}`
     setLoading(true)
 
     try {
@@ -95,10 +112,10 @@ const App: React.FC<{}> = () => {
       if (!r.ok) {
         switch (r.status) {
           case 404:
-            setErr("No tweets found.")
+            toast.error("No tweets found.")
             break
           default:
-            setErr(`An error has occurred: ${r.statusText}`)
+            toast.error(`An error has occurred: ${r.statusText}`)
             break
         }
         setLoading(false)
@@ -112,7 +129,7 @@ const App: React.FC<{}> = () => {
       setLoading(false)
       setLoaded(true)
     } catch (error) {
-      setErr(`An error has occurred.`)
+      toast.error(`An error has occurred.`)
       setLoading(false)
       return
     }
@@ -134,7 +151,7 @@ const App: React.FC<{}> = () => {
           <div className="mx-1">
             <form onSubmit={onSubmit}>
               <div className="flex flex-wrap mt-2 -mx-3">
-                <div className="w-full px-3">
+                <div className="w-full px-3 pb-2">
                   <label
                     className="block text-gray-700 text-sm font-bold mb-2"
                     htmlFor="tweet-url"
@@ -143,11 +160,13 @@ const App: React.FC<{}> = () => {
                   </label>
                   <input
                     id="tweet-url"
-                    className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                      loading && "bg-gray-200"
+                    className={`appearance-none block w-full border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
+                      loading
+                        ? "bg-gray-200 text-gray-400"
+                        : "bg-gray-100 text-gray-700"
                     }`}
                     type="text"
-                    placeholder="https://twitter.com/jack/status/20"
+                    placeholder="https://twitter.com/jack/status/20 or 20"
                     value={url}
                     onChange={(e) => {
                       setUrl(e.target.value)
@@ -155,11 +174,11 @@ const App: React.FC<{}> = () => {
                     onFocus={onFocus}
                     onBlur={onBlur}
                     disabled={loading}
-                    pattern=".*twitter.com\/(.+)\/status\/(\d+).*?"
+                    pattern=".*(\d+).*"
                   />
                   <div className="-mx-2 mb-2">
                     <div className="flex flex-row flex-wrap w-full mx-auto">
-                      <div className="w-1/2 px-2 md:w-1/4">
+                      <div className="w-1/3 px-2">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="format"
@@ -167,34 +186,25 @@ const App: React.FC<{}> = () => {
                           Format
                         </label>
                         <div className="relative">
-                          <select
-                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                              loading && "bg-gray-200"
-                            }`}
-                            id="format"
-                            value={imageFormat}
-                            onFocus={onFocus}
-                            onBlur={onBlur}
-                            onChange={(e) => {
-                              setImageFormat(e.target.value)
+                          <Select
+                            options={[
+                              { value: "jpg", label: "JPG" },
+                              { value: "png", label: "PNG" },
+                            ]}
+                            styles={selectStyle}
+                            onChange={(value, action) => {
+                              setImageFormat((value as { value: string }).value)
                             }}
-                            disabled={loading}
-                          >
-                            <option value="jpg">JPG</option>
-                            <option value="png">PNG</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg
-                              className="fill-current h-4 w-4"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                            </svg>
-                          </div>
+                            id="format"
+                            onBlur={onBlur}
+                            onFocus={onFocus}
+                            isDisabled={loading}
+                            defaultValue={{ value: "jpg", label: "JPG" }}
+                            filterOption={() => true}
+                          />
                         </div>
                       </div>
-                      <div className="w-1/2 px-2 md:w-1/4">
+                      <div className="w-1/3 px-2">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="theme"
@@ -202,62 +212,25 @@ const App: React.FC<{}> = () => {
                           Theme
                         </label>
                         <div className="relative">
-                          <select
-                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                              loading && "bg-gray-200"
-                            }`}
+                          <Select
+                            options={[
+                              { value: "light", label: "Light" },
+                              { value: "dark", label: "Dark" },
+                            ]}
+                            styles={selectStyle}
+                            onChange={(value, action) => {
+                              setTheme((value as { value: string }).value)
+                            }}
                             id="theme"
-                            value={theme}
-                            onFocus={onFocus}
                             onBlur={onBlur}
-                            onChange={(e) => {
-                              setTheme(e.target.value)
-                            }}
-                            disabled={loading}
-                          >
-                            <option value="light">Light</option>
-                            <option value="dark">Dark</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg
-                              className="fill-current h-4 w-4"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="w-1/2 px-2 md:w-1/4">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="lang"
-                        >
-                          Lang
-                        </label>
-                        <div className="relative">
-                          <input
-                            id="lang"
-                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                              loading && "bg-gray-200"
-                            }`}
-                            type="text"
-                            placeholder="en/ja/..."
-                            value={lang}
-                            onChange={(e) => {
-                              setLang(e.target.value.toLowerCase())
-                            }}
                             onFocus={onFocus}
-                            onBlur={onBlur}
-                            disabled={loading}
-                            maxLength={2}
-                            minLength={2}
-                            pattern="[a-z]{2}"
+                            isDisabled={loading}
+                            defaultValue={{ value: "light", label: "Light" }}
+                            filterOption={() => true}
                           />
                         </div>
                       </div>
-                      <div className="w-1/2 px-2 md:w-1/4">
+                      <div className="w-1/3 px-2">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="scale"
@@ -267,8 +240,10 @@ const App: React.FC<{}> = () => {
                         <div className="relative">
                           <input
                             id="scale"
-                            className={`appearance-none block w-full bg-gray-100 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                              loading && "bg-gray-200"
+                            className={`appearance-none block w-full border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
+                              loading
+                                ? "bg-gray-200 text-gray-400"
+                                : "bg-gray-100 text-gray-700"
                             }`}
                             type="number"
                             value={scale}
@@ -285,8 +260,63 @@ const App: React.FC<{}> = () => {
                           />
                         </div>
                       </div>
+                      <div className="w-1/2 px-2">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="lang"
+                        >
+                          Lang
+                        </label>
+                        <div className="relative">
+                          <Select
+                            options={languages.map((l) => ({
+                              value: l.code,
+                              label: `${l.local_name} (${l.code})`,
+                            }))}
+                            styles={selectStyle}
+                            onChange={(value, action) => {
+                              setLang((value as { value: string }).value)
+                            }}
+                            id="lang"
+                            onBlur={onBlur}
+                            onFocus={onFocus}
+                            isDisabled={loading}
+                            defaultValue={{
+                              value: "en",
+                              label: "English (en)",
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="w-1/2 px-2">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="timezone"
+                        >
+                          Timezone
+                        </label>
+                        <div className="relative">
+                          <Select
+                            options={timezones.map((t) => ({
+                              value: t.offset,
+                              label: t.text,
+                            }))}
+                            styles={selectStyle}
+                            onChange={(value, action) => {
+                              setTimezone((value as { value: number }).value)
+                            }}
+                            id="timezone"
+                            onBlur={onBlur}
+                            onFocus={onFocus}
+                            isDisabled={loading}
+                            defaultValue={{
+                              value: 0,
+                              label: "(UTC) Coordinated Universal Time",
+                            }}
+                          />
+                        </div>
+                      </div>
                     </div>
-                    {err && <p className="text-red-500 text-xs pb-2">{err}</p>}
                   </div>
                 </div>
               </div>
@@ -385,7 +415,7 @@ const App: React.FC<{}> = () => {
         </div>
       </div>
 
-      <div className="container max-w-screen-md mx-2">
+      <div className="container max-w-screen-md mx-auto mx-2">
         <hr />
         <div className="flex justify-end text-xs p-4">
           <div className="text-right">
