@@ -192,11 +192,27 @@ const App: React.FC<{}> = () => {
       if (languages.find((l) => l.code === lang)) {
         setLang(lang)
       }
+    } else {
+      try {
+        const lang = navigator.language.slice(0, 2)
+        if (languages.find((l) => l.code === lang)) {
+          setLang(lang)
+        }
+      } catch (e) {
+        console.error(e)
+      }
     }
     if (parsed.has("tz")) {
       const tz = parseInt(parsed.get("tz"))
       if (!Number.isNaN(tz) && timezones.find((t) => t.offset === tz)) {
         setTZ(tz)
+      }
+    } else {
+      try {
+        const tz = Math.round(Math.abs(new Date().getTimezoneOffset()) / 60)
+        setTZ(tz)
+      } catch (e) {
+        console.error(e)
       }
     }
     if (0 < Array.from(parsed.entries()).length) {
