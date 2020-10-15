@@ -123,7 +123,7 @@ const main = async () => {
       ])
       const rect = await page.evaluate(() => {
         const { x, y, width, height } = document
-          .querySelector("#app > div > div")
+          .querySelector("#app > * > *")
           ?.getBoundingClientRect()!
         return {
           x: x - 1,
