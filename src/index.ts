@@ -4,8 +4,11 @@ import Router from "koa-router"
 import axios from "axios"
 import querystring from "querystring"
 import timezones from "timezones.json"
+import url from "url"
 
 const port = process.env.PORT || "5000"
+const imageCacheUrl = process.env.IMAGE_CACHE_URL
+const imageCacheUA = process.env.IMAGE_CACHE_UA
 
 const main = async () => {
   const app = new Koa()
@@ -74,6 +77,26 @@ const main = async () => {
     await chromium.font(
       "https://rawcdn.githack.com/googlefonts/noto-fonts/ea9154f9a0947972baa772bc6744f1ec50007575/hinted/NotoSans/NotoSans-Regular.ttf"
     )
+
+    if (imageCacheUrl && imageCacheUA) {
+      const ua = ctx.request.headers["user-agent"]
+      if (!ua || !ua.includes(imageCacheUA)) {
+        const cacheUrl = url.resolve(imageCacheUrl, ctx.url.slice(1))
+        try {
+          const cache = await axios.get(cacheUrl, {
+            timeout: 500,
+            responseType: "arraybuffer",
+          })
+          ctx.set("Cache-Control", "s-maxage=600, stale-while-revalidate")
+          ctx.type = `image/${mode.replace("jpg", "jpeg")}`
+          ctx.body = cache.data
+          console.log(`Return cached: ${cacheUrl}`)
+          return
+        } catch (error) {
+          console.log(`NotFound: ${cacheUrl}`)
+        }
+      }
+    }
 
     const tzString = tz?.utc.pop()
 
