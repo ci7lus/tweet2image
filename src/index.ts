@@ -146,9 +146,15 @@ const main = async () => {
         return {
           x: x - 1,
           y: y - 1,
-          width: width + 2,
-          height: height + 2,
+          width: Math.round(width + 2),
+          height: Math.round(height + 2),
         }
+      })
+      await page.setViewport({
+        ...chromium.defaultViewport,
+        deviceScaleFactor: scale,
+        height: rect.height,
+        width: rect.width,
       })
       const buffer = await page.screenshot({
         clip: rect,
