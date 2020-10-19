@@ -5,6 +5,7 @@ import axios from "axios"
 import querystring from "querystring"
 import timezones from "timezones.json"
 import url from "url"
+import request from "request"
 
 const port = process.env.PORT || "5000"
 const imageCacheUrl = process.env.IMAGE_CACHE_URL
@@ -82,19 +83,13 @@ const main = async () => {
       const ua = ctx.request.headers["user-agent"]
       if (!ua || !ua.includes(imageCacheUA)) {
         const cacheUrl = url.resolve(imageCacheUrl, ctx.url.slice(1))
-        try {
-          const cache = await axios.get(cacheUrl, {
-            timeout: 500,
-            responseType: "arraybuffer",
-          })
-          ctx.set("Cache-Control", "s-maxage=600, stale-while-revalidate")
-          ctx.type = `image/${mode.replace("jpg", "jpeg")}`
-          ctx.body = cache.data
-          console.log(`Return cached: ${cacheUrl}`)
-          return
-        } catch (error) {
-          console.log(`NotFound: ${cacheUrl}`)
-        }
+        ctx.set(
+          "Cache-Control",
+          "max-age=2592000, public, stale-while-revalidate"
+        )
+        ctx.type = `image/${mode.replace("jpg", "jpeg")}`
+        ctx.body = ctx.req.pipe(request(cacheUrl))
+        return
       }
     }
 
@@ -160,7 +155,7 @@ const main = async () => {
         type: mode.replace("jpg", "jpeg"),
         omitBackground: mode === "png",
       })
-      ctx.set("Cache-Control", "s-maxage=600, stale-while-revalidate")
+      ctx.set("Cache-Control", "maxage=600, public, stale-while-revalidate")
       ctx.type = `image/${mode.replace("jpg", "jpeg")}`
       ctx.body = buffer
     } catch (error) {
