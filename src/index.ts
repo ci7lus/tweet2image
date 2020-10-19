@@ -6,6 +6,7 @@ import querystring from "querystring"
 import timezones from "timezones.json"
 import url from "url"
 import request from "request"
+import { PassThrough } from "stream"
 
 const port = process.env.PORT || "5000"
 const imageCacheUrl = process.env.IMAGE_CACHE_URL
@@ -63,11 +64,8 @@ const main = async () => {
     const parsedTweetId = parseInt(tweetId)
     if (Number.isNaN(parsedTweetId)) return ctx.throw(400, "number")
     const r = await axios.head(
-      `https://twitter.com/twitter/status/${tweetId}`,
+      `https://cdn.syndication.twimg.com/tweet?id=${tweetId}&lang=en`,
       {
-        headers: {
-          "user-agent": "card-bot",
-        },
         validateStatus: () => true,
       }
     )
@@ -83,13 +81,30 @@ const main = async () => {
       const ua = ctx.request.headers["user-agent"]
       if (!ua || !ua.includes(imageCacheUA)) {
         const cacheUrl = url.resolve(imageCacheUrl, ctx.url.slice(1))
-        ctx.set(
-          "Cache-Control",
-          "max-age=2592000, public, stale-while-revalidate"
-        )
-        ctx.type = `image/${mode.replace("jpg", "jpeg")}`
-        ctx.body = ctx.req.pipe(request(cacheUrl))
-        return
+        try {
+          const s = new PassThrough()
+          const r = request(cacheUrl)
+          r.pipe(s, { end: true })
+          let isReceived = false
+          await new Promise((res) => {
+            r.on("data", () => {
+              isReceived = true
+              res()
+            })
+            setTimeout(() => res(), 500)
+          })
+          if (isReceived) {
+            ctx.set(
+              "Cache-Control",
+              "max-age=2592000, public, stale-while-revalidate"
+            )
+            ctx.type = `image/${mode.replace("jpg", "jpeg")}`
+            ctx.body = s
+            return
+          }
+        } catch (e) {
+          console.error(e)
+        }
       }
     }
 
