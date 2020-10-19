@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import ReactDOM from "react-dom"
 import { ToastContainer, toast, Slide } from "react-toastify"
 import querystring from "querystring"
@@ -44,11 +44,6 @@ const timezoneOptions = timezones
     label: t.text,
   }))
 
-let proceededUrl: string | null = null
-let tweetId: string | null = null
-let hash: string | null = null
-let isNowEditing = false
-
 const App: React.FC<{}> = () => {
   const [loading, setLoading] = useState(false)
   const [url, setUrl] = useState("")
@@ -62,6 +57,11 @@ const App: React.FC<{}> = () => {
   const [isGyazoUploading, setIsGyazoUploading] = useState(false)
   const [gyazoRedirect, setGyazoRedirect] = useState<string | null>(null)
   const [gyazoSnippet, setGyazoSnippet] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>()
+  const proceededUrl = useRef<string | null>(null)
+  const tweetId = useRef<string | null>(null)
+  const hash = useRef<string | null>(null)
+  const isNowEditing = useRef<boolean>(false)
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
@@ -75,15 +75,15 @@ const App: React.FC<{}> = () => {
   const getImageUrl = () => {
     const settings = getChangedSetting()
     if (!!Object.keys(settings).length) {
-      return `${location.protocol}//${
-        location.hostname
-      }/${tweetId}.${imageFormat}?${querystring.stringify(settings)}`
+      return `${location.protocol}//${location.hostname}/${
+        tweetId.current
+      }.${imageFormat}?${querystring.stringify(settings)}`
     }
-    return `${location.protocol}//${location.hostname}/${tweetId}.${imageFormat}`
+    return `${location.protocol}//${location.hostname}/${tweetId.current}.${imageFormat}`
   }
 
   const getScrapboxSnippet = () => {
-    return `[${getImageUrl()} ${proceededUrl}]`
+    return `[${getImageUrl()} ${proceededUrl.current}]`
   }
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -92,16 +92,16 @@ const App: React.FC<{}> = () => {
   }
 
   const onFocus = () => {
-    isNowEditing = true
+    isNowEditing.current = true
   }
 
   const onBlur = (
     e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     e.persist()
-    isNowEditing = false
+    isNowEditing.current = false
     setTimeout(async () => {
-      if (isNowEditing || e.target.disabled) return
+      if (isNowEditing.current || e.target.disabled) return
       if (e.target.form.requestSubmit) {
         e.target.form.requestSubmit()
       } else {
@@ -118,21 +118,23 @@ const App: React.FC<{}> = () => {
       return
     }
 
-    tweetId = m[3]
+    tweetId.current = m[3]
 
-    const stat = [tweetId, imageFormat, theme, lang, scale, tz].join("")
-    if (hash === stat) return
-    hash = stat
+    const stat = [tweetId.current, imageFormat, theme, lang, scale, tz].join("")
+    if (hash.current === stat) return
+    hash.current = stat
 
-    proceededUrl = `https://twitter.com/${m[2] || "twitter"}/status/${tweetId}`
+    proceededUrl.current = `https://twitter.com/${m[2] || "twitter"}/status/${
+      tweetId.current
+    }`
     setLoading(true)
     setGyazoRedirect(null)
 
     try {
-      let imageUrl = `/${tweetId}.${imageFormat}`
+      let imageUrl = `/${tweetId.current}.${imageFormat}`
       const settings = getChangedSetting()
       if (!!Object.keys(settings).length) {
-        imageUrl = `/${tweetId}.${imageFormat}?${querystring.stringify(
+        imageUrl = `/${tweetId.current}.${imageFormat}?${querystring.stringify(
           settings
         )}`
       }
@@ -145,9 +147,18 @@ const App: React.FC<{}> = () => {
             break
           default:
             toast.error(`An error has occurred: ${r.statusText}`)
+            hash.current = null
+            setTimeout(async () => {
+              if (formRef.current.requestSubmit) {
+                formRef.current.requestSubmit()
+              } else {
+                await handleSubmitForm()
+              }
+            }, 1000)
             break
         }
         setLoading(false)
+
         return
       }
 
@@ -220,7 +231,7 @@ const App: React.FC<{}> = () => {
         "input#tweet-url"
       ) as HTMLInputElement | null
       if (!url) return
-      if (isNowEditing || url.disabled) return
+      if (isNowEditing.current || url.disabled) return
       if (url.form.requestSubmit) {
         setTimeout(() => url.form.requestSubmit(), 0)
       } else {
@@ -245,7 +256,7 @@ const App: React.FC<{}> = () => {
       })
       const formData = new FormData()
       formData.append("client_id", gyazoClientId)
-      formData.append("referer_url", proceededUrl)
+      formData.append("referer_url", proceededUrl.current)
       formData.append("image_url", base64Img)
       const easyAuth = await fetch(
         `https://upload.gyazo.com/api/upload/easy_auth`,
@@ -281,7 +292,7 @@ const App: React.FC<{}> = () => {
           <hr />
 
           <div className="mx-1">
-            <form onSubmit={onSubmit}>
+            <form onSubmit={onSubmit} ref={formRef}>
               <div className="flex flex-wrap mt-2 -mx-3">
                 <div className="w-full px-3 pb-2">
                   <label
@@ -451,7 +462,7 @@ const App: React.FC<{}> = () => {
             </form>
 
             {loaded ? (
-              <a href={proceededUrl} target="_blank" rel="noopener">
+              <a href={proceededUrl.current} target="_blank" rel="noopener">
                 <div className="relative w-full text-center bg-gray-300 rounded-t">
                   <img className="w-full" src={blob} />
                   <div className="absolute loading-center">
