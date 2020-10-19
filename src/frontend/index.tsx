@@ -62,6 +62,7 @@ const App: React.FC<{}> = () => {
   const tweetId = useRef<string | null>(null)
   const hash = useRef<string | null>(null)
   const isNowEditing = useRef<boolean>(false)
+  const retryCount = useRef<number>(0)
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
@@ -149,10 +150,13 @@ const App: React.FC<{}> = () => {
             toast.error(`An error has occurred: ${r.statusText}`)
             hash.current = null
             setTimeout(async () => {
-              if (formRef.current.requestSubmit) {
-                formRef.current.requestSubmit()
-              } else {
-                await handleSubmitForm()
+              if (retryCount.current < 2) {
+                retryCount.current++
+                if (formRef.current.requestSubmit) {
+                  formRef.current.requestSubmit()
+                } else {
+                  await handleSubmitForm()
+                }
               }
             }, 1000)
             break
@@ -162,6 +166,7 @@ const App: React.FC<{}> = () => {
         return
       }
 
+      retryCount.current = 0
       const blob = await r.blob()
       const blobUrl = URL.createObjectURL(blob)
       setBlob(blobUrl)
