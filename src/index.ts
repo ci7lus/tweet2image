@@ -64,7 +64,7 @@ const main = async () => {
     const parsedTweetId = parseInt(tweetId)
     if (Number.isNaN(parsedTweetId)) return ctx.throw(400, "number")
     const r = await axios.head(
-      `https://cdn.syndication.twimg.com/tweet?id=${tweetId}&lang=en`,
+      `https://cdn.syndication.twimg.com/tweet?id=${tweetId}`,
       {
         validateStatus: () => true,
       }
@@ -76,11 +76,24 @@ const main = async () => {
     await chromium.font(
       "https://rawcdn.githack.com/googlefonts/noto-fonts/ea9154f9a0947972baa772bc6744f1ec50007575/hinted/NotoSans/NotoSans-Regular.ttf"
     )
+    const mime = `image/${mode.replace("jpg", "jpeg")}`
 
     if (imageCacheUrl && imageCacheUA) {
       const ua = ctx.request.headers["user-agent"]
       if (!ua || !ua.includes(imageCacheUA)) {
-        const cacheUrl = url.resolve(imageCacheUrl, ctx.url.slice(1))
+        const qs = querystring.stringify(
+          Object.fromEntries(
+            Object.entries({
+              hideCard,
+              hideThread,
+              scale,
+              lang,
+              theme,
+              tz: tz.offset,
+            }).filter(([k, v]) => k in ctx.query)
+          )
+        )
+        const cacheUrl = url.resolve(imageCacheUrl, `${tweetId}.${mode}?${qs}`)
         try {
           const s = new PassThrough()
           const r = request(cacheUrl)
@@ -98,8 +111,9 @@ const main = async () => {
               "Cache-Control",
               "max-age=2592000, public, stale-while-revalidate"
             )
-            ctx.type = `image/${mode.replace("jpg", "jpeg")}`
+            ctx.type = mime
             ctx.body = s
+            console.log(`Cache hit: ${cacheUrl}`)
             return
           }
         } catch (e) {
@@ -176,8 +190,8 @@ const main = async () => {
         type: mode.replace("jpg", "jpeg"),
         omitBackground: mode === "png",
       })
-      ctx.set("Cache-Control", "maxage=600, public, stale-while-revalidate")
-      ctx.type = `image/${mode.replace("jpg", "jpeg")}`
+      ctx.set("Cache-Control", "max-age=600, public, stale-while-revalidate")
+      ctx.type = mime
       ctx.body = buffer
     } catch (error) {
       console.error(error)
