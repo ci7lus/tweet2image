@@ -93,7 +93,10 @@ const main = async () => {
             }).filter(([k, v]) => k in ctx.query)
           )
         )
-        const cacheUrl = url.resolve(imageCacheUrl, `${tweetId}.${mode}?${qs}`)
+        const cacheUrl = url.resolve(
+          imageCacheUrl,
+          `${tweetId}.${mode}${0 < qs.length ? `?${qs}` : ""}`
+        )
         try {
           const s = new PassThrough()
           const r = request(cacheUrl)
