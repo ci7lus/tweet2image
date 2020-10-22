@@ -44,9 +44,9 @@ const main = async () => {
   })
 
   router.get(/(\d+)\.(png|jpg)/, async (ctx) => {
-    const lang = ctx.query.lang || "en"
+    const lang = ctx.query.lang || "ja"
     if (!lang.match(/^[a-z-]{2,5}$/)) return ctx.throw(400, "lang")
-    const tz = timezones.find((t) => t.offset === parseInt(ctx.query.tz || "0"))
+    const tz = timezones.find((t) => t.offset === parseInt(ctx.query.tz || "9"))
     if (!tz) return ctx.throw(400, "tz")
     const theme = ctx.query.theme || "light"
     if (!theme.match(/^[a-z]+$/)) return ctx.throw(400, "theme")
@@ -134,7 +134,7 @@ const main = async () => {
       headless: chromium.headless,
       env: {
         ...process.env,
-        TZ: tzString ? tzString : "Etc/GMT",
+        TZ: tzString ? tzString : "Asia/Tokyo",
       },
     })
 

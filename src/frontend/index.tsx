@@ -51,8 +51,8 @@ const App: React.FC<{}> = () => {
   const [loaded, setLoaded] = useState(false)
   const [imageFormat, setImageFormat] = useState("jpg")
   const [theme, setTheme] = useState("light")
-  const [lang, setLang] = useState("en")
-  const [tz, setTZ] = useState(0)
+  const [lang, setLang] = useState("ja")
+  const [tz, setTZ] = useState(9)
   const [scale, setScale] = useState(2)
   const [isGyazoUploading, setIsGyazoUploading] = useState(false)
   const [gyazoRedirect, setGyazoRedirect] = useState<string | null>(null)
@@ -66,8 +66,8 @@ const App: React.FC<{}> = () => {
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
-    if (lang !== "en") settings["lang"] = lang
-    if (tz !== 0) settings["tz"] = tz
+    if (lang !== "ja") settings["lang"] = lang
+    if (tz !== 9) settings["tz"] = tz
     if (theme !== "light") settings["theme"] = theme
     if (scale !== 2) settings["scale"] = scale
     return settings
