@@ -63,6 +63,7 @@ const App: React.FC<{}> = () => {
   const hash = useRef<string | null>(null)
   const isNowEditing = useRef<boolean>(false)
   const retryCount = useRef<number>(0)
+  const tweetInput = useRef<HTMLInputElement>()
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
@@ -202,6 +203,13 @@ const App: React.FC<{}> = () => {
       if (!Number.isNaN(scale)) {
         setScale(scale)
       }
+    } else {
+      try {
+        const scale = window.devicePixelRatio
+        setScale(scale)
+      } catch (e) {
+        console.error(e)
+      }
     }
     if (parsed.has("lang")) {
       const lang = parsed.get("lang")
@@ -232,13 +240,9 @@ const App: React.FC<{}> = () => {
       }
     }
     if (0 < Array.from(parsed.entries()).length) {
-      const url = document.querySelector(
-        "input#tweet-url"
-      ) as HTMLInputElement | null
-      if (!url) return
-      if (isNowEditing.current || url.disabled) return
-      if (url.form.requestSubmit) {
-        setTimeout(() => url.form.requestSubmit(), 0)
+      if (isNowEditing.current || tweetInput?.current.disabled) return
+      if (tweetInput.current.form.requestSubmit) {
+        setTimeout(() => tweetInput.current.form.requestSubmit(), 0)
       } else {
         handleSubmitForm()
       }
@@ -307,6 +311,7 @@ const App: React.FC<{}> = () => {
                     Tweet Url
                   </label>
                   <input
+                    ref={tweetInput}
                     id="tweet-url"
                     className={`appearance-none block w-full border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
                       loading
