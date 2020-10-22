@@ -274,7 +274,7 @@ const App: React.FC<{}> = () => {
       const uploadResult = await easyAuth.json()
       window.open(uploadResult.get_image_url, "pop", "width=800, height=480")
       setGyazoRedirect(uploadResult.get_image_url)
-      setGyazoSnippet(`[ ${proceededUrl}]`)
+      setGyazoSnippet(`[ ${proceededUrl.current}]`)
     } catch (e) {
       console.error(e)
       toast.error("Failed to upload to gyazo")
