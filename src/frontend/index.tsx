@@ -498,7 +498,7 @@ const App: React.FC<{}> = () => {
               </div>
             )}
 
-            {loaded && (
+            {tweetId.current && (
               <div className="mt-2">
                 <label className="block tracking-wide text-gray-600 text-sm mb-2">
                   Image Url
