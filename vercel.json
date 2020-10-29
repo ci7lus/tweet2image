@@ -9,16 +9,15 @@
   ],
   "builds": [
     {
-      "src": "src/**/*.ts",
-      "use": "@now/node"
+      "src": "src/index.ts",
+      "use": "@vercel/node"
     },
     {
       "src": "package.json",
-      "use": "@now/static-build"
+      "use": "@vercel/static-build"
     }
   ],
   "env": {
-    "NODE_ENV": "production",
     "GYAZO_CLIENT_ID": "e2bd725244baa768eb100126fa2cd85910445778a25ba7ef1328608750b070d5"
   },
   "build": {

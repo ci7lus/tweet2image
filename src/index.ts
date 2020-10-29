@@ -155,10 +155,10 @@ const main = async () => {
       })
       const params = {
         widgetsVersion: "9066bb2:1593540614199",
-        origin: "file:///Users/ci7lus/tweet-card.html",
+        origin: "file:///Users/ci7lus/tweet2image.html",
         embedId: "twitter-widget-0",
-        hideCard: String(hideCard),
-        hideThread: String(hideThread),
+        hideCard: hideCard.toString(),
+        hideThread: hideThread.toString(),
         lang,
         theme,
         id: tweetId,

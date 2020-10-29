@@ -297,7 +297,7 @@ const App: React.FC<{}> = () => {
       />
       <div className="flex-1">
         <div className="container mx-auto max-w-screen-md p-4">
-          <div className="m-1 text-2xl">tweet-card</div>
+          <div className="m-1 text-2xl">tweet2image</div>
           <hr />
 
           <div className="mx-1">
@@ -626,11 +626,11 @@ const App: React.FC<{}> = () => {
         <div className="flex justify-end text-xs p-4">
           <div className="text-right">
             <span>
-              tweet-card&nbsp;/&nbsp;
+              tweet2image&nbsp;/&nbsp;
               <a
                 className="text-blue-400"
                 target="_blank"
-                href="https://github.com/ci7lus/tweet-card"
+                href="https://github.com/ci7lus/tweet2image"
                 rel="noopener"
               >
                 code &amp; bug report
