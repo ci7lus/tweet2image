@@ -53,6 +53,9 @@ const main = async () => {
     const scale = parseFloat(ctx.query.scale || "2")
     if (Number.isNaN(scale) || scale < 1 || 5 < scale)
       return ctx.throw(400, "scale")
+    if (scale !== 1) {
+      ctx.set("content-dpr", scale.toFixed(1))
+    }
     const hideCard =
       parseInt(ctx.query.hideCard || "0") === 1 || ctx.query.hideCard === "true"
     const hideThread =
@@ -63,13 +66,20 @@ const main = async () => {
     if (!["png", "jpg"].includes(mode)) return ctx.throw(400, "mode")
     const parsedTweetId = parseInt(tweetId)
     if (Number.isNaN(parsedTweetId)) return ctx.throw(400, "number")
-    const r = await axios.head(
-      `https://cdn.syndication.twimg.com/tweet?id=${tweetId}`,
-      {
-        validateStatus: () => true,
-      }
-    )
+    const r = await axios.get<{
+      id_str?: string
+      user?: { screen_name?: string }
+    }>(`https://cdn.syndication.twimg.com/tweet?id=${tweetId}`, {
+      validateStatus: () => true,
+    })
     if (![301, 200].includes(r.status)) return ctx.throw(r.status)
+    const { user, id_str } = r.data
+    if (user?.screen_name && id_str) {
+      ctx.set(
+        "link",
+        `<https://twitter.com/${user.screen_name}/status/${id_str}>; rel="canonical"`
+      )
+    }
     await chromium.font(
       "https://rawcdn.githack.com/googlefonts/noto-cjk/be6c059ac1587e556e2412b27f5155c8eb3ddbe6/NotoSansCJKjp-Regular.otf"
     )
