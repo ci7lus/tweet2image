@@ -8,7 +8,7 @@ import $ from "transform-ts"
 
 const gyazoClientId = $.string.transformOrThrow(process.env.GYAZO_CLIENT_ID)
 
-const selectStyle: StylesConfig = {
+const selectStyle: StylesConfig<{}, false> = {
   control: (previous) => ({
     ...previous,
     height: 46,
@@ -346,7 +346,7 @@ const App: React.FC<{}> = () => {
                               setImageFormat((value as { value: string }).value)
                             }}
                             id="format"
-                            onBlur={onBlur}
+                            onBlur={onBlur as any}
                             onFocus={onFocus}
                             isDisabled={loading}
                             defaultValue={imageFormats.find(
@@ -374,7 +374,7 @@ const App: React.FC<{}> = () => {
                               setTheme((value as { value: string }).value)
                             }}
                             id="theme"
-                            onBlur={onBlur}
+                            onBlur={onBlur as any}
                             onFocus={onFocus}
                             isDisabled={loading}
                             value={themes.find((t) => t.value === theme)}
@@ -428,7 +428,7 @@ const App: React.FC<{}> = () => {
                               setLang((value as { value: string }).value)
                             }}
                             id="lang"
-                            onBlur={onBlur}
+                            onBlur={onBlur as any}
                             onFocus={onFocus}
                             isDisabled={loading}
                             defaultValue={languageOptions.find(
@@ -455,7 +455,7 @@ const App: React.FC<{}> = () => {
                               setTZ((value as { value: number }).value)
                             }}
                             id="timezone"
-                            onBlur={onBlur}
+                            onBlur={onBlur as any}
                             onFocus={onFocus}
                             isDisabled={loading}
                             defaultValue={timezoneOptions.find(

@@ -112,7 +112,7 @@ const main = async () => {
           const r = request(cacheUrl)
           r.pipe(s, { end: true })
           let isReceived = false
-          await new Promise((res) => {
+          await new Promise<void>((res) => {
             r.on("data", () => {
               isReceived = true
               res()
@@ -142,6 +142,8 @@ const main = async () => {
       defaultViewport: {
         ...chromium.defaultViewport,
         deviceScaleFactor: scale,
+        width: 1280,
+        height: 1280,
       },
       executablePath: await chromium.executablePath,
       headless: chromium.headless,
