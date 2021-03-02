@@ -4,9 +4,9 @@ import { ToastContainer, toast, Slide } from "react-toastify"
 import querystring from "querystring"
 import Select, { StylesConfig } from "react-select"
 import timezones from "timezones.json"
-import $ from "transform-ts"
+import { Settings } from "react-feather"
 
-const gyazoClientId = $.string.transformOrThrow(process.env.GYAZO_CLIENT_ID)
+const defaultGyazoClientId = process.env.GYAZO_CLIENT_ID
 
 const selectStyle: StylesConfig<{}, false> = {
   control: (previous) => ({
@@ -64,6 +64,8 @@ const App: React.FC<{}> = () => {
   const isNowEditing = useRef<boolean>(false)
   const retryCount = useRef<number>(0)
   const tweetInput = useRef<HTMLInputElement>()
+  const [userGyazoClientId, setUserGyazoClientId] = useState("")
+  const gyazoClientId = userGyazoClientId || defaultGyazoClientId
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
@@ -205,7 +207,7 @@ const App: React.FC<{}> = () => {
       }
     } else {
       try {
-        const scale = window.devicePixelRatio
+        const scale = Math.ceil(window.devicePixelRatio)
         setScale(scale)
       } catch (e) {
         console.error(e)
@@ -247,7 +249,15 @@ const App: React.FC<{}> = () => {
         handleSubmitForm()
       }
     }
+    const savedGyazoClientId = localStorage.getItem("gyazo-client-id")
+    if (savedGyazoClientId) {
+      setUserGyazoClientId(savedGyazoClientId)
+    }
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem("gyazo-client-id", userGyazoClientId)
+  }, [userGyazoClientId])
 
   const tweetUploadToGyazo = async () => {
     setIsGyazoUploading(true)
@@ -297,7 +307,27 @@ const App: React.FC<{}> = () => {
       />
       <div className="flex-1">
         <div className="container mx-auto max-w-screen-md p-4">
-          <div className="m-1 text-2xl">tweet2image</div>
+          <div className="m-1 text-2xl flex justify-between items-center relative">
+            <h1>tweet2image</h1>
+            <details style={{ fontSize: 0 }}>
+              <summary className="text-gray-600">
+                <Settings aria-label="設定" size={20} />
+              </summary>
+              <div className="absolute bg-white shadow mt-8 right-0 top-0 z-20">
+                <div className="text-sm p-4 leading-relaxed">
+                  <h1 className="text-lg pb-2">設定</h1>
+                  <h2 className="text-base pb-2">Gyazo Client ID</h2>
+                  <input
+                    type="text"
+                    placeholder={defaultGyazoClientId}
+                    className="appearance-none block w-full border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 bg-gray-100 text-gray-700"
+                    value={userGyazoClientId}
+                    onChange={(e) => setUserGyazoClientId(e.target.value)}
+                  ></input>
+                </div>
+              </div>
+            </details>
+          </div>
           <hr />
 
           <div className="mx-1">
@@ -561,10 +591,18 @@ const App: React.FC<{}> = () => {
                 <div className="mx-auto mt-6 mb-2">
                   <button
                     className={`flex items-center leading-normal bg-gray-lighter rounded border border-indigo-200 p-2 whitespace-no-wrap text-grey-dark text-sm mx-auto ${
-                      (loading || isGyazoUploading || !!gyazoRedirect) &&
+                      (loading ||
+                        isGyazoUploading ||
+                        !!gyazoRedirect ||
+                        !gyazoClientId) &&
                       "bg-gray-200 text-gray-400"
                     }`}
-                    disabled={loading || isGyazoUploading || !!gyazoRedirect}
+                    disabled={
+                      loading ||
+                      isGyazoUploading ||
+                      !!gyazoRedirect ||
+                      !gyazoClientId
+                    }
                     onClick={tweetUploadToGyazo}
                   >
                     Upload to Gyazo📸

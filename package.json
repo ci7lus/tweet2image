@@ -21,6 +21,7 @@
     "puppeteer": "^7.1.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "react-feather": "^2.0.9",
     "react-select": "^4.1.0",
     "react-toastify": "^7.0.3",
     "tailwindcss": "^1",
@@ -34,8 +35,7 @@
     "koa-router": "^10.0.0",
     "puppeteer-core": "^7.1.0",
     "request": "^2.88.2",
-    "timezones.json": "^1.5.2",
-    "transform-ts": "^0.3.0"
+    "timezones.json": "^1.5.2"
   },
   "scripts": {
     "dev": "ts-node src/index.ts",
