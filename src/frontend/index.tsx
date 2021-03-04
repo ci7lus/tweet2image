@@ -289,40 +289,44 @@ const App: React.FC<{}> = () => {
           <hr />
 
           <div className="mx-1">
-            <Form
-              ref={formRef}
-              state={formState}
-              dispatch={dispatch}
-              disabled={loading}
-              onEditingStateChange={handleEditingStateChange}
-              onSubmit={onSubmit}
-            />
-            {loaded ? (
-              <a href={proceededUrl.current} target="_blank" rel="noopener">
-                <div className="relative w-full text-center bg-gray-300 rounded-t">
-                  <img className="w-full" src={blob} />
-                  <div className="absolute loading-center">
-                    <div className="h-full flex items-center justify-center">
-                      <div
-                        className={`loading ${
-                          loading ? "opacity-100" : "opacity-0"
-                        }`}
-                      ></div>
+            <div className="mt-2">
+              <Form
+                ref={formRef}
+                state={formState}
+                dispatch={dispatch}
+                disabled={loading}
+                onEditingStateChange={handleEditingStateChange}
+                onSubmit={onSubmit}
+              />
+            </div>
+            <div className="mt-4">
+              {loaded ? (
+                <a href={proceededUrl.current} target="_blank" rel="noopener">
+                  <div className="relative w-full text-center bg-gray-300 rounded-t">
+                    <img className="w-full" src={blob} />
+                    <div className="absolute loading-center">
+                      <div className="h-full flex items-center justify-center">
+                        <div
+                          className={`loading ${
+                            loading ? "opacity-100" : "opacity-0"
+                          }`}
+                        ></div>
+                      </div>
                     </div>
                   </div>
+                </a>
+              ) : (
+                <div className="h-full w-full flex-none bg-cover text-center bg-gray-300 rounded-t bg-center placeholder-cover">
+                  <div className="flex items-center justify-center">
+                    <div
+                      className={`loading ${
+                        loading ? "opacity-100" : "opacity-0"
+                      }`}
+                    ></div>
+                  </div>
                 </div>
-              </a>
-            ) : (
-              <div className="h-full w-full flex-none bg-cover text-center bg-gray-300 rounded-t bg-center placeholder-cover">
-                <div className="flex items-center justify-center">
-                  <div
-                    className={`loading ${
-                      loading ? "opacity-100" : "opacity-0"
-                    }`}
-                  ></div>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {tweetId.current && (
               <div className="mt-2">

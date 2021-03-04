@@ -331,53 +331,41 @@ export const Form = React.forwardRef<HTMLFormElement, FormProps>(
 
     return (
       <form ref={ref} onSubmit={handleSubmit}>
-        <div className="flex flex-wrap mt-2 -mx-3">
-          <div className="w-full px-3 pb-2">
+        <div className="grid grid-cols-6 gap-4">
+          <div className="col-span-6">
             <TweetUrlInput
               state={state}
               dispatch={dispatch}
               disabled={disabled}
               onEditingStateChange={onEditingStateChange}
             />
-            <div className="-mx-2 mb-2">
-              <div className="flex flex-row flex-wrap w-full mx-auto">
-                <div className="w-1/3 px-2">
-                  <ImageFormatSelect
-                    state={state}
-                    dispatch={dispatch}
-                    disabled={disabled}
-                  />
-                </div>
-                <div className="w-1/3 px-2">
-                  <ThemeSelect
-                    state={state}
-                    dispatch={dispatch}
-                    disabled={disabled}
-                  />
-                </div>
-                <div className="w-1/3 px-2">
-                  <ScaleInput
-                    state={state}
-                    dispatch={dispatch}
-                    disabled={disabled}
-                  />
-                </div>
-                <div className="w-1/2 px-2">
-                  <LangSelect
-                    state={state}
-                    dispatch={dispatch}
-                    disabled={disabled}
-                  />
-                </div>
-                <div className="w-1/2 px-2">
-                  <TimezoneSelect
-                    state={state}
-                    dispatch={dispatch}
-                    disabled={disabled}
-                  />
-                </div>
-              </div>
-            </div>
+          </div>
+          <div className="col-span-2">
+            <ImageFormatSelect
+              state={state}
+              dispatch={dispatch}
+              disabled={disabled}
+            />
+          </div>
+          <div className="col-span-2">
+            <ThemeSelect
+              state={state}
+              dispatch={dispatch}
+              disabled={disabled}
+            />
+          </div>
+          <div className="col-span-2">
+            <ScaleInput state={state} dispatch={dispatch} disabled={disabled} />
+          </div>
+          <div className="col-span-3">
+            <LangSelect state={state} dispatch={dispatch} disabled={disabled} />
+          </div>
+          <div className="col-span-3">
+            <TimezoneSelect
+              state={state}
+              dispatch={dispatch}
+              disabled={disabled}
+            />
           </div>
         </div>
       </form>
