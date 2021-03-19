@@ -1,59 +1,77 @@
-import React, { useState, useEffect, useRef } from "react"
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useReducer,
+  useCallback,
+} from "react"
 import ReactDOM from "react-dom"
 import { ToastContainer, toast, Slide } from "react-toastify"
 import querystring from "querystring"
-import Select, { StylesConfig } from "react-select"
-import timezones from "timezones.json"
 import { Settings } from "react-feather"
+
+import { Form, formReducer, useInitialFormState } from "./Form"
 
 const defaultGyazoClientId = process.env.GYAZO_CLIENT_ID
 
-const selectStyle: StylesConfig<{}, false> = {
-  control: (previous) => ({
-    ...previous,
-    height: 46,
-    backgroundColor: "#f7fafc",
-    borderColor: "#edf2f7",
-  }),
+const GYAZO_CLIENT_ID_KEY = "gyazo-client-id"
+const useGyazoClientIdState = (defaultId: string) => {
+  const initialUserClientId = localStorage.getItem(GYAZO_CLIENT_ID_KEY)
+  const [userGyazoClientId, setUserGyazoClientId] = useState(
+    initialUserClientId
+  )
+  useEffect(() => {
+    localStorage.setItem(GYAZO_CLIENT_ID_KEY, userGyazoClientId)
+  }, [userGyazoClientId])
+
+  return {
+    gyazoClientId: userGyazoClientId || defaultId,
+    userGyazoClientId,
+    setGyazoClientId: setUserGyazoClientId,
+  } as const
 }
 
-const imageFormats = [
-  { value: "jpg", label: "JPG" },
-  { value: "png", label: "PNG" },
-]
+const useEditingState = () => {
+  type Task = () => void
+  const [editing, setEditing] = useState(false)
+  const tasksOnEditFinished = useRef<Array<Task | undefined>>([])
 
-const themes = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-]
+  const addTaskOnEditFinished = useCallback(
+    (task: Task) => {
+      if (editing) {
+        tasksOnEditFinished.current.push(task)
+        return () => {
+          const idx = tasksOnEditFinished.current.findIndex((t) => t === task)
+          tasksOnEditFinished.current[idx] = undefined
+        }
+      } else {
+        task()
+      }
+    },
+    [editing]
+  )
 
-const languages: {
-  code: string
-  local_name: string
-}[] = require("../../languages.json")
+  useEffect(() => {
+    // 下がりエッジ
+    if (!editing) {
+      tasksOnEditFinished.current.forEach((t) => t?.())
+      tasksOnEditFinished.current = []
+    }
+  }, [editing])
 
-const languageOptions = languages.map((l) => ({
-  value: l.code,
-  label: `${l.local_name} (${l.code})`,
-}))
-
-const timezoneOptions = timezones
-  .filter((t) => t.isdst === false && 0 < t.utc.length)
-  .map((t) => ({
-    value: t.offset,
-    label: t.text,
-  }))
+  return {
+    editing,
+    handleEditingStateChange: setEditing,
+    addTaskOnEditFinished,
+  } as const
+}
 
 const App: React.FC<{}> = () => {
   const [loading, setLoading] = useState(false)
-  const [url, setUrl] = useState("")
+  const initialFormState = useInitialFormState()
+  const [formState, dispatch] = useReducer(formReducer, initialFormState)
   const [blob, setBlob] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
-  const [imageFormat, setImageFormat] = useState("jpg")
-  const [theme, setTheme] = useState("light")
-  const [lang, setLang] = useState("ja")
-  const [tz, setTZ] = useState(9)
-  const [scale, setScale] = useState(2)
   const [isGyazoUploading, setIsGyazoUploading] = useState(false)
   const [gyazoRedirect, setGyazoRedirect] = useState<string | null>(null)
   const [gyazoSnippet, setGyazoSnippet] = useState<string | null>(null)
@@ -63,58 +81,47 @@ const App: React.FC<{}> = () => {
   const hash = useRef<string | null>(null)
   const isNowEditing = useRef<boolean>(false)
   const retryCount = useRef<number>(0)
-  const tweetInput = useRef<HTMLInputElement>()
-  const [userGyazoClientId, setUserGyazoClientId] = useState("")
-  const gyazoClientId = userGyazoClientId || defaultGyazoClientId
+  const {
+    gyazoClientId,
+    userGyazoClientId,
+    setGyazoClientId,
+  } = useGyazoClientIdState(defaultGyazoClientId)
+  const {
+    editing,
+    addTaskOnEditFinished,
+    handleEditingStateChange,
+  } = useEditingState()
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
-    if (lang !== "ja") settings["lang"] = lang
-    if (tz !== 9) settings["tz"] = tz
-    if (theme !== "light") settings["theme"] = theme
-    if (scale !== 2) settings["scale"] = scale
+    if (formState.lang !== "ja") settings["lang"] = formState.lang
+    if (formState.timezone !== 9) settings["tz"] = formState.timezone
+    if (formState.theme !== "light") settings["theme"] = formState.theme
+    if (formState.scale !== 2) settings["scale"] = formState.scale
     return settings
   }
 
   const getImageUrl = () => {
     const settings = getChangedSetting()
     if (!!Object.keys(settings).length) {
-      return `${location.protocol}//${location.hostname}/${
-        tweetId.current
-      }.${imageFormat}?${querystring.stringify(settings)}`
+      return `${location.protocol}//${location.hostname}/${tweetId.current}.${
+        formState.imageFormat
+      }?${querystring.stringify(settings)}`
     }
-    return `${location.protocol}//${location.hostname}/${tweetId.current}.${imageFormat}`
+    return `${location.protocol}//${location.hostname}/${tweetId.current}.${formState.imageFormat}`
   }
 
   const getScrapboxSnippet = () => {
     return `[${getImageUrl()} ${proceededUrl.current}]`
   }
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const onSubmit = async () => {
     await handleSubmitForm()
   }
 
-  const onFocus = () => {
-    isNowEditing.current = true
-  }
-
-  const onBlur = (
-    e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    e.persist()
-    isNowEditing.current = false
-    setTimeout(async () => {
-      if (isNowEditing.current || e.target.disabled) return
-      if (e.target.form.requestSubmit) {
-        e.target.form.requestSubmit()
-      } else {
-        await handleSubmitForm()
-      }
-    }, 1000)
-  }
-
   const handleSubmitForm = async () => {
+    if (loading) return
+    const { url, imageFormat, theme, lang, scale, timezone: tz } = formState
     if (url.length === 0) return
     const m = url.match(/(twitter.com\/(.+)\/status\/)?(\d+)/)
     if (!m) {
@@ -184,80 +191,31 @@ const App: React.FC<{}> = () => {
   }
 
   useEffect(() => {
-    const parsed = new URLSearchParams(location.hash.slice(1))
-    if (parsed.has("url")) {
-      setUrl(parsed.get("url"))
-    }
-    if (parsed.has("format")) {
-      const format = parsed.get("format")
-      if (["jpg", "png"].includes(format)) {
-        setImageFormat(format)
-      }
-    }
-    if (parsed.has("theme")) {
-      const theme = parsed.get("theme")
-      if (["light", "dark"].includes(theme)) {
-        setTheme(theme)
-      }
-    }
-    if (parsed.has("scale")) {
-      const scale = parseInt(parsed.get("scale"))
-      if (!Number.isNaN(scale)) {
-        setScale(scale)
-      }
+    let handle: number | undefined
+    let remove: (() => void) | undefined
+    if (editing) {
+      remove = addTaskOnEditFinished(handleSubmitForm)
     } else {
-      try {
-        const scale = Math.ceil(window.devicePixelRatio)
-        setScale(scale)
-      } catch (e) {
-        console.error(e)
-      }
+      handle = window.setTimeout(() => handleSubmitForm(), 1000)
     }
-    if (parsed.has("lang")) {
-      const lang = parsed.get("lang")
-      if (languages.find((l) => l.code === lang)) {
-        setLang(lang)
-      }
-    } else {
-      try {
-        const lang = navigator.language.slice(0, 2)
-        if (languages.find((l) => l.code === lang)) {
-          setLang(lang)
-        }
-      } catch (e) {
-        console.error(e)
-      }
+    return () => {
+      window.clearTimeout(handle)
+      remove?.()
     }
-    if (parsed.has("tz")) {
-      const tz = parseInt(parsed.get("tz"))
-      if (!Number.isNaN(tz) && timezones.find((t) => t.offset === tz)) {
-        setTZ(tz)
-      }
-    } else {
-      try {
-        const tz = Math.round(Math.abs(new Date().getTimezoneOffset()) / 60)
-        setTZ(tz)
-      } catch (e) {
-        console.error(e)
-      }
-    }
-    if (0 < Array.from(parsed.entries()).length) {
-      if (isNowEditing.current || tweetInput?.current.disabled) return
-      if (tweetInput.current.form.requestSubmit) {
-        setTimeout(() => tweetInput.current.form.requestSubmit(), 0)
-      } else {
-        handleSubmitForm()
-      }
-    }
-    const savedGyazoClientId = localStorage.getItem("gyazo-client-id")
-    if (savedGyazoClientId) {
-      setUserGyazoClientId(savedGyazoClientId)
-    }
-  }, [])
+  }, [formState, editing, addTaskOnEditFinished])
 
   useEffect(() => {
-    localStorage.setItem("gyazo-client-id", userGyazoClientId)
-  }, [userGyazoClientId])
+    const parsed = new URLSearchParams(location.hash.slice(1))
+    if (0 < Array.from(parsed.entries()).length) {
+      if (isNowEditing.current || loading) return
+      handleSubmitForm()
+      /*if (tweetInput.current.form.requestSubmit) {
+          setTimeout(() => tweetInput.current.form.requestSubmit(), 0)
+        } else {
+          handleSubmitForm()
+        }*/
+    }
+  }, [])
 
   const tweetUploadToGyazo = async () => {
     setIsGyazoUploading(true)
@@ -322,7 +280,7 @@ const App: React.FC<{}> = () => {
                     placeholder={defaultGyazoClientId}
                     className="appearance-none block w-full border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 bg-gray-100 text-gray-700"
                     value={userGyazoClientId}
-                    onChange={(e) => setUserGyazoClientId(e.target.value)}
+                    onChange={(e) => setGyazoClientId(e.target.value)}
                   ></input>
                 </div>
               </div>
@@ -331,202 +289,44 @@ const App: React.FC<{}> = () => {
           <hr />
 
           <div className="mx-1">
-            <form onSubmit={onSubmit} ref={formRef}>
-              <div className="flex flex-wrap mt-2 -mx-3">
-                <div className="w-full px-3 pb-2">
-                  <label
-                    className="block text-gray-700 text-sm font-bold mb-2"
-                    htmlFor="tweet-url"
-                  >
-                    Tweet Url
-                  </label>
-                  <input
-                    ref={tweetInput}
-                    id="tweet-url"
-                    className={`appearance-none block w-full border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                      loading
-                        ? "bg-gray-200 text-gray-400"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                    type="text"
-                    placeholder="https://twitter.com/jack/status/20 or 20"
-                    value={url}
-                    onChange={(e) => {
-                      setUrl(e.target.value)
-                    }}
-                    onFocus={onFocus}
-                    onBlur={onBlur}
-                    disabled={loading}
-                    pattern=".*(\d+).*"
-                  />
-                  <div className="-mx-2 mb-2">
-                    <div className="flex flex-row flex-wrap w-full mx-auto">
-                      <div className="w-1/3 px-2">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="format"
-                        >
-                          Format
-                        </label>
-                        <div className="relative">
-                          <Select
-                            options={imageFormats}
-                            styles={selectStyle}
-                            onChange={(value, action) => {
-                              setImageFormat((value as { value: string }).value)
-                            }}
-                            id="format"
-                            onBlur={onBlur as any}
-                            onFocus={onFocus}
-                            isDisabled={loading}
-                            defaultValue={imageFormats.find(
-                              (f) => f.value === imageFormat
-                            )}
-                            value={imageFormats.find(
-                              (f) => f.value === imageFormat
-                            )}
-                            filterOption={() => true}
-                          />
-                        </div>
-                      </div>
-                      <div className="w-1/3 px-2">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="theme"
-                        >
-                          Theme
-                        </label>
-                        <div className="relative">
-                          <Select
-                            options={themes}
-                            styles={selectStyle}
-                            onChange={(value, action) => {
-                              setTheme((value as { value: string }).value)
-                            }}
-                            id="theme"
-                            onBlur={onBlur as any}
-                            onFocus={onFocus}
-                            isDisabled={loading}
-                            value={themes.find((t) => t.value === theme)}
-                            defaultValue={themes.find((t) => t.value === theme)}
-                            filterOption={() => true}
-                          />
-                        </div>
-                      </div>
-                      <div className="w-1/3 px-2">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="scale"
-                        >
-                          Scale
-                        </label>
-                        <div className="relative">
-                          <input
-                            id="scale"
-                            className={`appearance-none block w-full border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 ${
-                              loading
-                                ? "bg-gray-200 text-gray-400"
-                                : "bg-gray-100 text-gray-700"
-                            }`}
-                            type="number"
-                            value={scale}
-                            onChange={(e) => {
-                              const p = parseFloat(e.target.value)
-                              if (Number.isNaN(p)) return
-                              setScale(p)
-                            }}
-                            onFocus={onFocus}
-                            onBlur={onBlur}
-                            disabled={loading}
-                            min={1}
-                            max={5}
-                          />
-                        </div>
-                      </div>
-                      <div className="w-1/2 px-2">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="lang"
-                        >
-                          Lang
-                        </label>
-                        <div className="relative">
-                          <Select
-                            options={languageOptions}
-                            styles={selectStyle}
-                            onChange={(value, action) => {
-                              setLang((value as { value: string }).value)
-                            }}
-                            id="lang"
-                            onBlur={onBlur as any}
-                            onFocus={onFocus}
-                            isDisabled={loading}
-                            defaultValue={languageOptions.find(
-                              (l) => l.value === lang
-                            )}
-                            value={languageOptions.find(
-                              (l) => l.value === lang
-                            )}
-                          />
-                        </div>
-                      </div>
-                      <div className="w-1/2 px-2">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="timezone"
-                        >
-                          Timezone
-                        </label>
-                        <div className="relative">
-                          <Select
-                            options={timezoneOptions}
-                            styles={selectStyle}
-                            onChange={(value, action) => {
-                              setTZ((value as { value: number }).value)
-                            }}
-                            id="timezone"
-                            onBlur={onBlur as any}
-                            onFocus={onFocus}
-                            isDisabled={loading}
-                            defaultValue={timezoneOptions.find(
-                              (t) => t.value === tz
-                            )}
-                            value={timezoneOptions.find((t) => t.value === tz)}
-                          />
-                        </div>
+            <div className="mt-2">
+              <Form
+                ref={formRef}
+                state={formState}
+                dispatch={dispatch}
+                disabled={loading}
+                onEditingStateChange={handleEditingStateChange}
+                onSubmit={onSubmit}
+              />
+            </div>
+            <div className="mt-4">
+              {loaded ? (
+                <a href={proceededUrl.current} target="_blank" rel="noopener">
+                  <div className="relative w-full text-center bg-gray-300 rounded-t">
+                    <img className="w-full" src={blob} />
+                    <div className="absolute loading-center">
+                      <div className="h-full flex items-center justify-center">
+                        <div
+                          className={`loading ${
+                            loading ? "opacity-100" : "opacity-0"
+                          }`}
+                        ></div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </form>
-
-            {loaded ? (
-              <a href={proceededUrl.current} target="_blank" rel="noopener">
-                <div className="relative w-full text-center bg-gray-300 rounded-t">
-                  <img className="w-full" src={blob} />
-                  <div className="absolute loading-center">
-                    <div className="h-full flex items-center justify-center">
-                      <div
-                        className={`loading ${
-                          loading ? "opacity-100" : "opacity-0"
-                        }`}
-                      ></div>
-                    </div>
+                </a>
+              ) : (
+                <div className="h-full w-full flex-none bg-cover text-center bg-gray-300 rounded-t bg-center placeholder-cover">
+                  <div className="flex items-center justify-center">
+                    <div
+                      className={`loading ${
+                        loading ? "opacity-100" : "opacity-0"
+                      }`}
+                    ></div>
                   </div>
                 </div>
-              </a>
-            ) : (
-              <div className="h-full w-full flex-none bg-cover text-center bg-gray-300 rounded-t bg-center placeholder-cover">
-                <div className="flex items-center justify-center">
-                  <div
-                    className={`loading ${
-                      loading ? "opacity-100" : "opacity-0"
-                    }`}
-                  ></div>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {tweetId.current && (
               <div className="mt-2">
@@ -659,7 +459,7 @@ const App: React.FC<{}> = () => {
         </div>
       </div>
 
-      <div className="container max-w-screen-md mx-auto mx-2">
+      <div className="container max-w-screen-md mx-auto">
         <hr />
         <div className="flex justify-end text-xs p-4">
           <div className="text-right">
