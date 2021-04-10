@@ -120,14 +120,18 @@ const main = async () => {
             setTimeout(() => res(), 500)
           })
           if (isReceived) {
-            ctx.set(
-              "Cache-Control",
-              "max-age=2592000, public, stale-while-revalidate"
-            )
-            ctx.type = mime
-            ctx.body = s
-            console.log(`Cache hit: ${cacheUrl}`)
-            return
+            if (r.response?.statusCode === 200) {
+              ctx.set(
+                "Cache-Control",
+                "max-age=2592000, public, stale-while-revalidate"
+              )
+              ctx.type = mime
+              ctx.body = s
+              console.log(`Cache hit: ${cacheUrl}`)
+              return
+            } else {
+              console.warn(`cache status_code: ${r.response?.statusCode}`)
+            }
           }
         } catch (e) {
           console.error(e)
