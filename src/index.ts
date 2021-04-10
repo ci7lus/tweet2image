@@ -11,7 +11,6 @@ import { PassThrough } from "stream"
 const port = process.env.PORT || "5000"
 const imageCacheUrl = process.env.IMAGE_CACHE_URL
 const imageCacheUA = process.env.IMAGE_CACHE_UA
-const widgetsVersion = process.env.WIDGETS_VERSION
 
 const main = async () => {
   const app = new Koa()
@@ -101,7 +100,6 @@ const main = async () => {
               lang,
               theme,
               tz: tz.offset,
-              widgetsVersion,
             }).filter(([k, v]) => k in ctx.query)
           )
         )
@@ -168,7 +166,7 @@ const main = async () => {
         }
       })
       const params = {
-        widgetsVersion,
+        widgetsVersion: "9066bb2:1593540614199",
         origin: "file:///Users/ci7lus/tweet2image.html",
         embedId: "twitter-widget-0",
         hideCard: hideCard.toString(),
