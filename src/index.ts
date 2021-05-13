@@ -190,7 +190,7 @@ const main = async () => {
       })
       const buffer = await page.screenshot({
         clip: rect,
-        type: mode.replace("jpg", "jpeg"),
+        type: mode === "png" ? "png" : "jpeg",
         omitBackground: mode === "png",
       })
       ctx.set("Cache-Control", "max-age=600, public, stale-while-revalidate")
