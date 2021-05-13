@@ -1,2 +1,6 @@
 .cache
 public
+dist
+.env
+.envrc
+yarn-error.log
