@@ -14,6 +14,9 @@ import { Form, formReducer, useInitialFormState } from "./Form"
 
 const defaultGyazoClientId = process.env.GYAZO_CLIENT_ID
 
+const hostname =
+  process.env.HOSTNAME || `${location.protocol}//${location.hostname}`
+
 const GYAZO_CLIENT_ID_KEY = "gyazo-client-id"
 const useGyazoClientIdState = (defaultId: string) => {
   const initialUserClientId = localStorage.getItem(GYAZO_CLIENT_ID_KEY)
@@ -104,11 +107,11 @@ const App: React.FC<{}> = () => {
   const getImageUrl = () => {
     const settings = getChangedSetting()
     if (!!Object.keys(settings).length) {
-      return `${location.protocol}//${location.hostname}/${tweetId.current}.${
+      return `${hostname}/${tweetId.current}.${
         formState.imageFormat
       }?${querystring.stringify(settings)}`
     }
-    return `${location.protocol}//${location.hostname}/${tweetId.current}.${formState.imageFormat}`
+    return `${hostname}/${tweetId.current}.${formState.imageFormat}`
   }
 
   const getScrapboxSnippet = () => {
@@ -142,12 +145,12 @@ const App: React.FC<{}> = () => {
     setGyazoRedirect(null)
 
     try {
-      let imageUrl = `/${tweetId.current}.${imageFormat}`
+      let imageUrl = `${hostname}/${tweetId.current}.${imageFormat}`
       const settings = getChangedSetting()
       if (!!Object.keys(settings).length) {
-        imageUrl = `/${tweetId.current}.${imageFormat}?${querystring.stringify(
-          settings
-        )}`
+        imageUrl = `${hostname}/${
+          tweetId.current
+        }.${imageFormat}?${querystring.stringify(settings)}`
       }
       const r = await fetch(imageUrl)
 

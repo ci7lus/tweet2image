@@ -15,22 +15,6 @@ const imageCacheUA = process.env.IMAGE_CACHE_UA
 const main = async () => {
   const app = new Koa()
 
-  if (process.env.NODE_ENV !== "production") {
-    const Parcel = require("parcel-bundler")
-    const bundler = new Parcel("./src/frontend/index.html", {
-      outDir: "./public",
-    })
-    await bundler.bundle()
-
-    const KoaStaticServer = require("koa-static-server")
-    app.use(
-      KoaStaticServer({
-        rootDir: "./public",
-        last: false,
-      })
-    )
-  }
-
   const router = new Router()
 
   router.use(async (ctx, next) => {

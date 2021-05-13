@@ -16,6 +16,7 @@
     "autoprefixer": "^9",
     "clsx": "^1.1.1",
     "koa-static-server": "^1.5.2",
+    "npm-run-all": "^4.1.5",
     "parcel-bundler": "^1.12.4",
     "postcss-modules": "^3",
     "prettier": "^2.2.1",
@@ -39,7 +40,9 @@
     "timezones.json": "^1.5.2"
   },
   "scripts": {
-    "dev": "ts-node src/index.ts",
+    "dev:server": "ts-node src/index.ts",
+    "dev:client": "HOSTNAME=http://localhost:5000 parcel src/frontend/index.html",
+    "dev": "run-p -l dev:*",
     "build": "parcel build src/frontend/index.html"
   }
 }
