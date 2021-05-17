@@ -64,11 +64,20 @@ const main = async () => {
         `<https://twitter.com/${user.screen_name}/status/${id_str}>; rel="canonical"`
       )
     }
+    // CJK統合漢字 CJK Unified Ideographs
+    // 日本語が描画可能に
     await chromium.font(
-      "https://rawcdn.githack.com/googlefonts/noto-cjk/be6c059ac1587e556e2412b27f5155c8eb3ddbe6/NotoSansCJKjp-Regular.otf"
+      "https://rawcdn.githack.com/googlefonts/noto-cjk/165c01b46ea533872e002e0785ff17e44f6d97d8/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf"
     )
+    // 数学用英数字記号 Mathematical Alphanumeric Symbols
+    // 𝒜𝓃𝓃𝒶ℳℴ𝒸𝒽𝒾𝓏 などが描画可能に
     await chromium.font(
-      "https://rawcdn.githack.com/googlefonts/noto-fonts/ea9154f9a0947972baa772bc6744f1ec50007575/hinted/NotoSans/NotoSans-Regular.ttf"
+      "https://rawcdn.githack.com/googlefonts/noto-fonts/736e6b8f886cae4664e78edb0880fbb5af7d50b7/hinted/ttf/NotoSansMath/NotoSansMath-Regular.ttf"
+    )
+    // 基本ラテン文字 Basic Latin
+    // 下付き文字などが描画可能に
+    await chromium.font(
+      "https://rawcdn.githack.com/googlefonts/noto-fonts/7697007fcb3563290d73f41f56a70d5d559d828c/hinted/ttf/NotoSans/NotoSans-Regular.ttf"
     )
     const mime = `image/${mode.replace("jpg", "jpeg")}`
 
