@@ -47,5 +47,8 @@
     "dev": "concurrently \"yarn dev:css\" \"cross-env NODE_ENV=development remix dev\"",
     "dev:css": "tailwindcss -w -i ./styles/tailwind.css -o ./app/styles/tailwind.css"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "engines": {
+    "node": ">=14"
+  }
 }
