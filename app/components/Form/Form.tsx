@@ -3,7 +3,7 @@ import clsx from "clsx"
 import Select, { StylesConfig } from "react-select"
 import timezones from "timezones.json"
 import languages from "../../../languages.json"
-import { ImageFormat, Theme } from "../types"
+import { ImageFormat, Theme } from "../../types"
 import { FormState, FormDispatch } from "./types"
 import { updatedAction } from "./useForm"
 
@@ -37,7 +37,10 @@ const FormInput: React.FC<JSX.IntrinsicElements["input"]> = ({
   </input>
 )
 
-const extend = <T,>() => <S extends T>(value: S) => value
+const extend =
+  <T,>() =>
+  <S extends T>(value: S) =>
+    value
 type FormSelectProps<K extends keyof FormState> = Readonly<{
   id?: string
   options: ReadonlyArray<{ value: FormState[K]; label: string }>
@@ -225,7 +228,6 @@ const ScaleInput: React.VFC<ScaleInputProps> = ({
     onEditingStateChange?.(false)
 
     const s = Number.parseInt(value, 10)
-    console.log(s)
     if (Number.isNaN(s)) {
       setValue(`${scale}`)
       return
