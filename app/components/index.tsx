@@ -1,29 +1,19 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useReducer,
-  useCallback,
-} from "react"
-import ReactDOM from "react-dom"
+import { useState, useEffect, useRef, useReducer, useCallback } from "react"
 import { ToastContainer, toast, Slide } from "react-toastify"
 import querystring from "querystring"
 import { Settings } from "react-feather"
 
 import { Form, formReducer, useInitialFormState } from "./Form"
 
-const defaultGyazoClientId = process.env.GYAZO_CLIENT_ID
-
-const hostname =
-  process.env.HOSTNAME || `${location.protocol}//${location.hostname}`
-
 const GYAZO_CLIENT_ID_KEY = "gyazo-client-id"
 const useGyazoClientIdState = (defaultId: string) => {
   const initialUserClientId = localStorage.getItem(GYAZO_CLIENT_ID_KEY)
-  const [userGyazoClientId, setUserGyazoClientId] = useState(
-    initialUserClientId
-  )
+  const [userGyazoClientId, setUserGyazoClientId] =
+    useState(initialUserClientId)
   useEffect(() => {
+    if (!userGyazoClientId) {
+      return
+    }
     localStorage.setItem(GYAZO_CLIENT_ID_KEY, userGyazoClientId)
   }, [userGyazoClientId])
 
@@ -69,7 +59,7 @@ const useEditingState = () => {
   } as const
 }
 
-const App: React.FC<{}> = () => {
+export function MainApp({ GYAZO_CLIENT_ID }: { GYAZO_CLIENT_ID: string }) {
   const [loading, setLoading] = useState(false)
   const initialFormState = useInitialFormState()
   const [formState, dispatch] = useReducer(formReducer, initialFormState)
@@ -78,22 +68,16 @@ const App: React.FC<{}> = () => {
   const [isGyazoUploading, setIsGyazoUploading] = useState(false)
   const [gyazoRedirect, setGyazoRedirect] = useState<string | null>(null)
   const [gyazoSnippet, setGyazoSnippet] = useState<string | null>(null)
-  const formRef = useRef<HTMLFormElement>()
+  const formRef = useRef<HTMLFormElement>(null)
   const proceededUrl = useRef<string | null>(null)
   const tweetId = useRef<string | null>(null)
   const hash = useRef<string | null>(null)
   const isNowEditing = useRef<boolean>(false)
   const retryCount = useRef<number>(0)
-  const {
-    gyazoClientId,
-    userGyazoClientId,
-    setGyazoClientId,
-  } = useGyazoClientIdState(defaultGyazoClientId)
-  const {
-    editing,
-    addTaskOnEditFinished,
-    handleEditingStateChange,
-  } = useEditingState()
+  const { gyazoClientId, userGyazoClientId, setGyazoClientId } =
+    useGyazoClientIdState(GYAZO_CLIENT_ID)
+  const { editing, addTaskOnEditFinished, handleEditingStateChange } =
+    useEditingState()
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number } = {}
@@ -106,12 +90,12 @@ const App: React.FC<{}> = () => {
 
   const getImageUrl = () => {
     const settings = getChangedSetting()
+    const url = new URL(location.href)
+    url.pathname = `${tweetId.current}.${formState.imageFormat}`
     if (!!Object.keys(settings).length) {
-      return `${hostname}/${tweetId.current}.${
-        formState.imageFormat
-      }?${querystring.stringify(settings)}`
+      url.search = querystring.stringify(settings)
     }
-    return `${hostname}/${tweetId.current}.${formState.imageFormat}`
+    return url.href
   }
 
   const getScrapboxSnippet = () => {
@@ -145,12 +129,13 @@ const App: React.FC<{}> = () => {
     setGyazoRedirect(null)
 
     try {
-      let imageUrl = `${hostname}/${tweetId.current}.${imageFormat}`
+      const url = new URL(location.href)
+      url.pathname = `${tweetId.current}.${imageFormat}`
+      let imageUrl = url.href
       const settings = getChangedSetting()
       if (!!Object.keys(settings).length) {
-        imageUrl = `${hostname}/${
-          tweetId.current
-        }.${imageFormat}?${querystring.stringify(settings)}`
+        url.search = querystring.stringify(settings)
+        imageUrl = url.href
       }
       const r = await fetch(imageUrl)
 
@@ -165,7 +150,7 @@ const App: React.FC<{}> = () => {
             setTimeout(async () => {
               if (retryCount.current < 2) {
                 retryCount.current++
-                if (formRef.current.requestSubmit) {
+                if (formRef.current?.requestSubmit) {
                   formRef.current.requestSubmit()
                 } else {
                   await handleSubmitForm()
@@ -221,6 +206,9 @@ const App: React.FC<{}> = () => {
   }, [])
 
   const tweetUploadToGyazo = async () => {
+    if (!blob) {
+      return
+    }
     setIsGyazoUploading(true)
     toast.info("Uploading to Gyazo...")
     try {
@@ -230,13 +218,13 @@ const App: React.FC<{}> = () => {
         const reader = new FileReader()
         reader.onerror = rej
         reader.onload = () => {
-          res((reader.result as any) as Blob)
+          res(reader.result as any as Blob)
         }
         reader.readAsDataURL(imageData)
       })
       const formData = new FormData()
       formData.append("client_id", gyazoClientId)
-      formData.append("referer_url", proceededUrl.current)
+      formData.append("referer_url", proceededUrl.current || "")
       formData.append("image_url", base64Img)
       const easyAuth = await fetch(
         `https://upload.gyazo.com/api/upload/easy_auth`,
@@ -268,10 +256,10 @@ const App: React.FC<{}> = () => {
       />
       <div className="flex-1">
         <div className="container mx-auto max-w-screen-md p-4">
-          <div className="m-1 text-2xl flex justify-between items-center relative">
+          <div className="m-1 mt-4 mb-2 text-2xl flex justify-between items-center relative">
             <h1>tweet2image</h1>
             <details style={{ fontSize: 0 }}>
-              <summary className="text-gray-600">
+              <summary className="text-gray-600 flex items-center">
                 <Settings aria-label="設定" size={20} />
               </summary>
               <div className="absolute bg-white shadow mt-8 right-0 top-0 z-20">
@@ -280,9 +268,9 @@ const App: React.FC<{}> = () => {
                   <h2 className="text-base pb-2">Gyazo Client ID</h2>
                   <input
                     type="text"
-                    placeholder={defaultGyazoClientId}
+                    placeholder={GYAZO_CLIENT_ID}
                     className="appearance-none block w-full border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 bg-gray-100 text-gray-700"
-                    value={userGyazoClientId}
+                    value={userGyazoClientId || ""}
                     onChange={(e) => setGyazoClientId(e.target.value)}
                   ></input>
                 </div>
@@ -303,10 +291,10 @@ const App: React.FC<{}> = () => {
               />
             </div>
             <div className="mt-4">
-              {loaded ? (
+              {loaded && proceededUrl.current ? (
                 <a href={proceededUrl.current} target="_blank" rel="noopener">
                   <div className="relative w-full text-center bg-gray-300 rounded-t">
-                    <img className="w-full" src={blob} />
+                    {blob && <img className="w-full" src={blob} />}
                     <div className="absolute loading-center">
                       <div className="h-full flex items-center justify-center">
                         <div
@@ -419,7 +407,7 @@ const App: React.FC<{}> = () => {
                         <input
                           type="text"
                           className="flex-shrink flex-grow leading-normal w-px flex-1 h-10 rounded rounded-r-none px-3 relative bg-gray-100 text-gray-700 border border-gray-200"
-                          value={gyazoSnippet}
+                          value={gyazoSnippet || ""}
                           onChange={(e) => setGyazoSnippet(e.target.value)}
                         />
                         <div className="flex -mr-px">
@@ -427,7 +415,7 @@ const App: React.FC<{}> = () => {
                             className="flex items-center leading-normal bg-grey-lighter rounded rounded-l-none border border-l-0 border-grey-light px-3 whitespace-no-wrap text-grey-dark text-sm"
                             onClick={async () => {
                               try {
-                                if (navigator.clipboard) {
+                                if (navigator.clipboard && gyazoSnippet) {
                                   await navigator.clipboard.writeText(
                                     gyazoSnippet
                                   )
@@ -495,5 +483,3 @@ const App: React.FC<{}> = () => {
     </div>
   )
 }
-
-ReactDOM.render(<App />, document.getElementById("app"))

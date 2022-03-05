@@ -116,4 +116,7 @@ lib
 dist
 .now
 .vercel
-public
+/build/
+/public/build
+/api/index.js
+app/styles/tailwind.css

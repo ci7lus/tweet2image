@@ -1,27 +1,10 @@
 {
-  "version": 2,
-  "routes": [
-    { "handle": "filesystem" },
-    {
-      "src": "/(.+)",
-      "dest": "src/index.ts"
-    }
-  ],
-  "builds": [
-    {
-      "src": "src/index.ts",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build"
-    }
-  ],
   "env": {
     "GYAZO_CLIENT_ID": "e2bd725244baa768eb100126fa2cd85910445778a25ba7ef1328608750b070d5"
   },
   "build": {
     "env": {
+      "ENABLE_FILE_SYSTEM_API": "1",
       "GYAZO_CLIENT_ID": "e2bd725244baa768eb100126fa2cd85910445778a25ba7ef1328608750b070d5"
     }
   }

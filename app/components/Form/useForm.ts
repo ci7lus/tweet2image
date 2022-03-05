@@ -36,7 +36,9 @@ const isInCandidates = <T>(
 
 export const useInitialFormState = () => {
   const initialState = useMemo(() => {
-    const parsed = new URLSearchParams(location.hash.slice(1))
+    const parsed = new URLSearchParams(
+      globalThis.location ? location.hash.slice(1) : ""
+    )
     const sanitizeWithInCandidates = <T>(
       candidates: readonly T[],
       value: unknown
