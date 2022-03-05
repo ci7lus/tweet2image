@@ -6,7 +6,7 @@ import querystring from "querystring"
 import nodeRequest from "request"
 import { PassThrough } from "stream"
 
-const route = new RegExp(/(\d+)\.(png|jpg)/)
+const route = new RegExp(/^(\d+)\.(png|jpg)$/)
 const imageCacheUrl = process.env.IMAGE_CACHE_URL
 const imageCacheUA = process.env.IMAGE_CACHE_UA
 
