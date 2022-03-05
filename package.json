@@ -31,7 +31,7 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "chrome-aws-lambda": "^9.1.0",
     "koa": "^2.13.1",
     "koa-router": "^10.0.0",
