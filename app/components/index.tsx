@@ -90,15 +90,11 @@ export function MainApp({ GYAZO_CLIENT_ID }: { GYAZO_CLIENT_ID: string }) {
 
   const getImageUrl = () => {
     const settings = getChangedSetting()
-    if (!!Object.keys(settings).length) {
-      const url = new URL(location.href)
-      url.pathname = `${tweetId.current}.${
-        formState.imageFormat
-      }?${querystring.stringify(settings)}`
-      return url.href
-    }
     const url = new URL(location.href)
     url.pathname = `${tweetId.current}.${formState.imageFormat}`
+    if (!!Object.keys(settings).length) {
+      url.search = querystring.stringify(settings)
+    }
     return url.href
   }
 
@@ -138,10 +134,7 @@ export function MainApp({ GYAZO_CLIENT_ID }: { GYAZO_CLIENT_ID: string }) {
       let imageUrl = url.href
       const settings = getChangedSetting()
       if (!!Object.keys(settings).length) {
-        const url = new URL(location.href)
-        url.pathname = `${
-          tweetId.current
-        }.${imageFormat}?${querystring.stringify(settings)}`
+        url.search = querystring.stringify(settings)
         imageUrl = url.href
       }
       const r = await fetch(imageUrl)
