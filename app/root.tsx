@@ -9,11 +9,13 @@ import {
 import type { MetaFunction } from "remix"
 import styles from "./styles/index.css"
 import tailwind from "./styles/tailwind.css"
+import toast from "../node_modules/react-toastify/dist/ReactToastify.css"
 
 export function links() {
   return [
     { rel: "stylesheet", href: styles },
     { rel: "stylesheet", href: tailwind },
+    { rel: "stylesheet", href: toast },
   ]
 }
 
