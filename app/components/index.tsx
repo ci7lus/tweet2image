@@ -7,7 +7,9 @@ import { Form, formReducer, useInitialFormState } from "./Form"
 
 const GYAZO_CLIENT_ID_KEY = "gyazo-client-id"
 const useGyazoClientIdState = (defaultId: string) => {
-  const initialUserClientId = localStorage.getItem(GYAZO_CLIENT_ID_KEY)
+  const initialUserClientId = globalThis.localStorage
+    ? localStorage.getItem(GYAZO_CLIENT_ID_KEY)
+    : ""
   const [userGyazoClientId, setUserGyazoClientId] =
     useState(initialUserClientId)
   useEffect(() => {
@@ -59,7 +61,13 @@ const useEditingState = () => {
   } as const
 }
 
-export function MainApp({ GYAZO_CLIENT_ID }: { GYAZO_CLIENT_ID: string }) {
+export function MainApp({
+  GYAZO_CLIENT_ID,
+  currentUrl,
+}: {
+  GYAZO_CLIENT_ID: string
+  currentUrl: string
+}) {
   const [loading, setLoading] = useState(false)
   const initialFormState = useInitialFormState()
   const [formState, dispatch] = useReducer(formReducer, initialFormState)
@@ -90,7 +98,7 @@ export function MainApp({ GYAZO_CLIENT_ID }: { GYAZO_CLIENT_ID: string }) {
 
   const getImageUrl = () => {
     const settings = getChangedSetting()
-    const url = new URL(location.href)
+    const url = new URL(currentUrl)
     url.pathname = `${tweetId.current}.${formState.imageFormat}`
     if (!!Object.keys(settings).length) {
       url.search = querystring.stringify(settings)
@@ -129,7 +137,7 @@ export function MainApp({ GYAZO_CLIENT_ID }: { GYAZO_CLIENT_ID: string }) {
     setGyazoRedirect(null)
 
     try {
-      const url = new URL(location.href)
+      const url = new URL(currentUrl)
       url.pathname = `${tweetId.current}.${imageFormat}`
       let imageUrl = url.href
       const settings = getChangedSetting()
