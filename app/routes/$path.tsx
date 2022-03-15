@@ -10,6 +10,26 @@ const route = new RegExp(/^(\d+)\.(png|jpg)$/)
 const imageCacheUrl = process.env.IMAGE_CACHE_URL
 const imageCacheUA = process.env.IMAGE_CACHE_UA
 
+const fonts = [
+  // CJK統合漢字 CJK Unified Ideographs
+  // 日本語が描画可能に
+  "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@165c01b46ea533872e002e0785ff17e44f6d97d8/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf",
+  // 数学用英数字記号 Mathematical Alphanumeric Symbols
+  // 𝒜𝓃𝓃𝒶ℳℴ𝒸𝒽𝒾𝓏 などが描画可能に
+  "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@736e6b8f886cae4664e78edb0880fbb5af7d50b7/hinted/ttf/NotoSansMath/NotoSansMath-Regular.ttf",
+  // 基本ラテン文字 Basic Latin
+  // 下付き文字などが描画可能に
+  "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@7697007fcb3563290d73f41f56a70d5d559d828c/hinted/ttf/NotoSans/NotoSans-Regular.ttf",
+  // Yi Symbols
+  "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSansYi/NotoSansYi-Regular.ttf",
+  // Osage Symbols
+  "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSansOsage/NotoSansOsage-Regular.ttf",
+  // Rejang Symbols
+  "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSansRejang/NotoSansRejang-Regular.ttf",
+  // Ahom
+  "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSerifAhom/NotoSerifAhom-Regular.ttf",
+]
+
 export async function loader({
   request,
   params,
@@ -75,37 +95,7 @@ export async function loader({
     ] = `<https://twitter.com/${user.screen_name}/status/${id_str}>; rel="canonical"`
   }
 
-  // CJK統合漢字 CJK Unified Ideographs
-  // 日本語が描画可能に
-  await chromium.font(
-    "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@165c01b46ea533872e002e0785ff17e44f6d97d8/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf"
-  )
-  // 数学用英数字記号 Mathematical Alphanumeric Symbols
-  // 𝒜𝓃𝓃𝒶ℳℴ𝒸𝒽𝒾𝓏 などが描画可能に
-  await chromium.font(
-    "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@736e6b8f886cae4664e78edb0880fbb5af7d50b7/hinted/ttf/NotoSansMath/NotoSansMath-Regular.ttf"
-  )
-  // 基本ラテン文字 Basic Latin
-  // 下付き文字などが描画可能に
-  await chromium.font(
-    "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@7697007fcb3563290d73f41f56a70d5d559d828c/hinted/ttf/NotoSans/NotoSans-Regular.ttf"
-  )
-  // Yi Symbols
-  await chromium.font(
-    "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSansYi/NotoSansYi-Regular.ttf"
-  )
-  // Osage Symbols
-  await chromium.font(
-    "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSansOsage/NotoSansOsage-Regular.ttf"
-  )
-  // Rejang Symbols
-  await chromium.font(
-    "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSansRejang/NotoSansRejang-Regular.ttf"
-  )
-  // Ahom
-  await chromium.font(
-    "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSerifAhom/NotoSerifAhom-Regular.ttf"
-  )
+  await Promise.all(fonts.map((font) => chromium.font(font)))
   const mime = `image/${mode.replace("jpg", "jpeg")}`
 
   if (imageCacheUrl && imageCacheUA) {
