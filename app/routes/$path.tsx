@@ -90,6 +90,22 @@ export async function loader({
   await chromium.font(
     "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@7697007fcb3563290d73f41f56a70d5d559d828c/hinted/ttf/NotoSans/NotoSans-Regular.ttf"
   )
+  // Yi Symbols
+  await chromium.font(
+    "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSansYi/NotoSansYi-Regular.ttf"
+  )
+  // Osage Symbols
+  await chromium.font(
+    "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSansOsage/NotoSansOsage-Regular.ttf"
+  )
+  // Rejang Symbols
+  await chromium.font(
+    "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSansRejang/NotoSansRejang-Regular.ttf"
+  )
+  // Ahom
+  await chromium.font(
+    "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@1fa2d9b8270805c778e0856f80b6d023caa0e535/hinted/ttf/NotoSerifAhom/NotoSerifAhom-Regular.ttf"
+  )
   const mime = `image/${mode.replace("jpg", "jpeg")}`
 
   if (imageCacheUrl && imageCacheUA) {
