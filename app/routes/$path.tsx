@@ -1,6 +1,7 @@
 import timezones from "timezones.json"
 import axios from "axios"
-import chromium from "chrome-aws-lambda"
+import puppeteer from "puppeteer-core"
+import chromium from "@sparticuz/chromium"
 import url from "url"
 import querystring from "querystring"
 import nodeRequest from "request"
@@ -59,6 +60,9 @@ export async function loader({
     parseInt(requestUrl.searchParams.get("hideThread") || "0") === 1 ||
     requestUrl.searchParams.get("hideThread") === "true"
 
+  console.log(
+    `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=${lang}`
+  )
   const r = await axios.get<{
     id_str?: string
     user?: { screen_name?: string }
@@ -69,6 +73,7 @@ export async function loader({
     }
   )
   if (![301, 200].includes(r.status)) {
+    console.log(r.data)
     return new Response("remote is" + r.status, { status: 400 })
   }
   const { user, id_str } = r.data
@@ -148,7 +153,7 @@ export async function loader({
 
   const tzString = tz?.utc.pop()
 
-  const browser = await chromium.puppeteer.launch({
+  const browser = await puppeteer.launch({
     args: chromium.args,
     defaultViewport: {
       ...chromium.defaultViewport,
