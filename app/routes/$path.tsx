@@ -1,6 +1,6 @@
 import timezones from "timezones.json"
 import axios from "axios"
-import chromium from "chrome-aws-lambda"
+import chromium from "@shortjared/chrome-aws-lambda"
 import url from "url"
 import querystring from "querystring"
 import nodeRequest from "request"
@@ -62,9 +62,12 @@ export async function loader({
   const r = await axios.get<{
     id_str?: string
     user?: { screen_name?: string }
-  }>(`https://cdn.syndication.twimg.com/tweet?id=${tweetId}`, {
-    validateStatus: () => true,
-  })
+  }>(
+    `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=${lang}`,
+    {
+      validateStatus: () => true,
+    }
+  )
   if (![301, 200].includes(r.status)) {
     return new Response("remote is" + r.status, { status: 400 })
   }

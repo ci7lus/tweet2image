@@ -1,4 +1,4 @@
-import { useLoaderData } from "remix"
+import { useLoaderData } from "@remix-run/react"
 import { MainApp } from "~/components"
 
 export async function loader({ request }: { request: Request }) {

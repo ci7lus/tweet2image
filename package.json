@@ -6,9 +6,9 @@
     "@remix-run/dev": "^1.2.3",
     "@remix-run/eslint-config": "^1.2.3",
     "@remix-run/serve": "^1.2.3",
-    "@types/puppeteer": "^5.4.5",
-    "@types/react": "^17.0.39",
-    "@types/react-dom": "^17.0.13",
+    "@types/puppeteer": "^7.0.4",
+    "@types/react": "^17",
+    "@types/react-dom": "^17",
     "@types/react-select": "^5.0.1",
     "@types/request": "^2.48.8",
     "autoprefixer": "^10.4.2",
@@ -18,10 +18,10 @@
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.7",
     "prettier": "^2.5.1",
-    "puppeteer": "^13.4.1",
+    "puppeteer": "^15",
     "react-feather": "^2.0.9",
-    "react-select": "^5.2.2",
-    "react-toastify": "^8.2.0",
+    "react-select": "^5.6.0",
+    "react-toastify": "^9.1.1",
     "tailwindcss": "^3.0.23",
     "ts-node": "^10.6.0",
     "typescript": "^4.6.2"
@@ -29,13 +29,13 @@
   "dependencies": {
     "@remix-run/react": "^1.2.3",
     "@remix-run/vercel": "^1.2.3",
+    "@shortjared/chrome-aws-lambda": "^15.5.0",
     "axios": "^0.26.0",
-    "chrome-aws-lambda": "^10.1.0",
     "koa": "^2.13.4",
-    "koa-router": "^10.1.1",
-    "puppeteer-core": "^13.4.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "koa-router": "^12.0.0",
+    "puppeteer-core": "^15",
+    "react": "^17",
+    "react-dom": "^17",
     "remix": "^1.2.3",
     "request": "^2.88.2",
     "timezones.json": "^1.6.1"
@@ -47,8 +47,5 @@
     "dev": "concurrently \"yarn dev:css\" \"cross-env NODE_ENV=development remix dev\"",
     "dev:css": "tailwindcss -w -i ./styles/tailwind.css -o ./app/styles/tailwind.css"
   },
-  "sideEffects": false,
-  "engines": {
-    "node": ">=14"
-  }
+  "sideEffects": false
 }
