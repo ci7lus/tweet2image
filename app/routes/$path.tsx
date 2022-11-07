@@ -62,9 +62,12 @@ export async function loader({
   const r = await axios.get<{
     id_str?: string
     user?: { screen_name?: string }
-  }>(`https://cdn.syndication.twimg.com/tweet?id=${tweetId}`, {
-    validateStatus: () => true,
-  })
+  }>(
+    `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=${lang}`,
+    {
+      validateStatus: () => true,
+    }
+  )
   if (![301, 200].includes(r.status)) {
     return new Response("remote is" + r.status, { status: 400 })
   }
