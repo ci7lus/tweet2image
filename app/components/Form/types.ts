@@ -1,5 +1,5 @@
 import React from "react"
-import { ImageFormat, Theme } from "../types"
+import { ImageFormat, Theme } from "../../types"
 
 export type FormState = Readonly<{
   url: string
