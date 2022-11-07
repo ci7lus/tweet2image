@@ -1,7 +1,6 @@
 import timezones from "timezones.json"
 import axios from "axios"
-import puppeteer from "puppeteer-core"
-import chromium from "@sparticuz/chromium"
+import chromium from "@shortjared/chrome-aws-lambda"
 import url from "url"
 import querystring from "querystring"
 import nodeRequest from "request"
@@ -153,7 +152,7 @@ export async function loader({
 
   const tzString = tz?.utc.pop()
 
-  const browser = await puppeteer.launch({
+  const browser = await chromium.puppeteer.launch({
     args: chromium.args,
     defaultViewport: {
       ...chromium.defaultViewport,

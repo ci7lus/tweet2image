@@ -18,7 +18,7 @@
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.7",
     "prettier": "^2.5.1",
-    "puppeteer": "^19.2.2",
+    "puppeteer": "^15",
     "react-feather": "^2.0.9",
     "react-select": "^5.2.2",
     "react-toastify": "^9.1.1",
@@ -29,11 +29,11 @@
   "dependencies": {
     "@remix-run/react": "^1.2.3",
     "@remix-run/vercel": "^1.2.3",
-    "@sparticuz/chromium": "^108.0.1",
+    "@shortjared/chrome-aws-lambda": "^15.5.0",
     "axios": "^0.26.0",
     "koa": "^2.13.4",
     "koa-router": "^12.0.0",
-    "puppeteer-core": "^19.2.2",
+    "puppeteer-core": "^15",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "remix": "^1.2.3",
@@ -47,8 +47,5 @@
     "dev": "concurrently \"yarn dev:css\" \"cross-env NODE_ENV=development remix dev\"",
     "dev:css": "tailwindcss -w -i ./styles/tailwind.css -o ./app/styles/tailwind.css"
   },
-  "sideEffects": false,
-  "engines": {
-    "node": ">=16"
-  }
+  "sideEffects": false
 }
