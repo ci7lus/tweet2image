@@ -54,6 +54,12 @@ export const useInitialFormState = () => {
       return scale
     }
 
+    const sanitizeBoolean = (value: string | null) => {
+      if (value == null) return null
+      const boolean = Boolean(value)
+      return boolean
+    }
+
     let initialScale: number
     try {
       initialScale = Math.ceil(window.devicePixelRatio)
@@ -88,6 +94,10 @@ export const useInitialFormState = () => {
           sanitizeNumber(parsed.get("tz"))
         ) ?? initialTimezone,
       scale: sanitizeNumber(parsed.get("scale")) ?? initialScale,
+      hideCard: sanitizeBoolean(parsed.get("hideCard")) ?? false,
+      hideThread: sanitizeBoolean(parsed.get("hideThread")) ?? false,
+      t2iSkipSensitiveWarning:
+        sanitizeBoolean(parsed.get("t2iSkipSensitiveWarning")) ?? false,
     }
 
     return initialState

@@ -8,6 +8,9 @@ export type FormState = Readonly<{
   scale: number
   lang: string
   timezone: number
+  hideCard: boolean
+  hideThread: boolean
+  t2iSkipSensitiveWarning: boolean
 }>
 export type FormActions = {
   [K in keyof FormState]: Readonly<{

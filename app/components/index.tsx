@@ -88,11 +88,15 @@ export function MainApp({
     useEditingState()
 
   const getChangedSetting = () => {
-    const settings: { [key: string]: string | number } = {}
+    const settings: { [key: string]: string | number | boolean } = {}
     if (formState.lang !== "ja") settings["lang"] = formState.lang
     if (formState.timezone !== 9) settings["tz"] = formState.timezone
     if (formState.theme !== "light") settings["theme"] = formState.theme
     if (formState.scale !== 2) settings["scale"] = formState.scale
+    if (formState.hideCard !== false) settings["hideCard"] = true
+    if (formState.hideThread !== false) settings["hideThread"] = true
+    if (formState.t2iSkipSensitiveWarning !== false)
+      settings["t2iSkipSensitiveWarning"] = true
     return settings
   }
 
@@ -116,7 +120,17 @@ export function MainApp({
 
   const handleSubmitForm = async () => {
     if (loading) return
-    const { url, imageFormat, theme, lang, scale, timezone: tz } = formState
+    const {
+      url,
+      imageFormat,
+      theme,
+      lang,
+      scale,
+      timezone: tz,
+      hideCard,
+      hideThread,
+      t2iSkipSensitiveWarning,
+    } = formState
     if (url.length === 0) return
     const m = url.match(/(twitter.com\/(.+)\/status\/)?(\d+)/)
     if (!m) {
@@ -126,7 +140,17 @@ export function MainApp({
 
     tweetId.current = m[3]
 
-    const stat = [tweetId.current, imageFormat, theme, lang, scale, tz].join("")
+    const stat = [
+      tweetId.current,
+      imageFormat,
+      theme,
+      lang,
+      scale,
+      tz,
+      hideCard,
+      hideThread,
+      t2iSkipSensitiveWarning,
+    ].join("")
     if (hash.current === stat) return
     hash.current = stat
 

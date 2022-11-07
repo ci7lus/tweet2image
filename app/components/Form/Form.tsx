@@ -69,7 +69,7 @@ const FormSelect = <K extends keyof FormState>({
   const handleChange = useCallback(
     (newValue: { value: FormState[K] } | null) => {
       const value = newValue?.value
-      if (!value) {
+      if (value === undefined) {
         return
       }
       dispatch(updatedAction(formKey, value))
@@ -318,6 +318,105 @@ const TimezoneSelect: React.VFC<TimezoneSelectProps> = ({
   </div>
 )
 
+type HideCardSelectProps = Readonly<{
+  state: FormState
+  disabled: boolean
+  dispatch: FormDispatch
+}>
+const HideCardOptions: ReadonlyArray<{
+  value: boolean
+  label: string
+}> = [
+  { value: false, label: "Disable" },
+  { value: true, label: "Enable" },
+]
+const HIDE_CARD_SELECT_ID = "hide-card-select"
+const HideCardSelect: React.VFC<HideCardSelectProps> = ({
+  state,
+  disabled,
+  dispatch,
+}) => (
+  <div>
+    <FormLabel htmlFor={THEME_FORMAT_SELECT_ID}>Hide card</FormLabel>
+    <div className="relative mt-2">
+      <FormSelect
+        id={HIDE_CARD_SELECT_ID}
+        options={HideCardOptions}
+        formKey="hideCard"
+        dispatch={dispatch}
+        state={state}
+        disabled={disabled}
+      />
+    </div>
+  </div>
+)
+
+type HideThreadSelectProps = Readonly<{
+  state: FormState
+  disabled: boolean
+  dispatch: FormDispatch
+}>
+const HideThreadOptions: ReadonlyArray<{
+  value: boolean
+  label: string
+}> = [
+  { value: false, label: "Disable" },
+  { value: true, label: "Enable" },
+]
+const HIDE_THREAD_SELECT_ID = "hide-thread-select"
+const HideThreadSelect: React.VFC<HideThreadSelectProps> = ({
+  state,
+  disabled,
+  dispatch,
+}) => (
+  <div>
+    <FormLabel htmlFor={THEME_FORMAT_SELECT_ID}>Hide thread</FormLabel>
+    <div className="relative mt-2">
+      <FormSelect
+        id={HIDE_THREAD_SELECT_ID}
+        options={HideThreadOptions}
+        formKey="hideThread"
+        dispatch={dispatch}
+        state={state}
+        disabled={disabled}
+      />
+    </div>
+  </div>
+)
+
+type T2iSkipSensitiveWarningSelectProps = Readonly<{
+  state: FormState
+  disabled: boolean
+  dispatch: FormDispatch
+}>
+const T2iSkipSensitiveWarningOptions: ReadonlyArray<{
+  value: boolean
+  label: string
+}> = [
+  { value: false, label: "Disable" },
+  { value: true, label: "Enable" },
+]
+const T2I_SKIP_SENSITIVE_WARNING_SELECT_ID = "t2i-skip-sensitive-warning-select"
+const T2iSkipSensitiveWarningSelect: React.VFC<
+  T2iSkipSensitiveWarningSelectProps
+> = ({ state, disabled, dispatch }) => (
+  <div>
+    <FormLabel htmlFor={T2I_SKIP_SENSITIVE_WARNING_SELECT_ID}>
+      Skip sensitive warning
+    </FormLabel>
+    <div className="relative mt-2">
+      <FormSelect
+        id={T2I_SKIP_SENSITIVE_WARNING_SELECT_ID}
+        options={T2iSkipSensitiveWarningOptions}
+        formKey="t2iSkipSensitiveWarning"
+        dispatch={dispatch}
+        state={state}
+        disabled={disabled}
+      />
+    </div>
+  </div>
+)
+
 type FormProps = Readonly<{
   state: FormState
   dispatch: FormDispatch
@@ -368,6 +467,27 @@ export const Form = React.forwardRef<HTMLFormElement, FormProps>(
           </div>
           <div className="col-span-3">
             <TimezoneSelect
+              state={state}
+              dispatch={dispatch}
+              disabled={disabled}
+            />
+          </div>
+          <div className="col-span-2">
+            <HideCardSelect
+              state={state}
+              dispatch={dispatch}
+              disabled={disabled}
+            />
+          </div>
+          <div className="col-span-2">
+            <HideThreadSelect
+              state={state}
+              dispatch={dispatch}
+              disabled={disabled}
+            />
+          </div>
+          <div className="col-span-2">
+            <T2iSkipSensitiveWarningSelect
               state={state}
               dispatch={dispatch}
               disabled={disabled}
