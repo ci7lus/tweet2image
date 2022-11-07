@@ -45,7 +45,6 @@ export async function loader({
   if (Number.isNaN(scale) || scale < 1 || 5 < scale) {
     return new Response("400 scale", { status: 400 })
   }
-
   const headers: Record<string, string> = {
     "access-control-allow-origin": "*",
   }
@@ -58,6 +57,9 @@ export async function loader({
   const hideThread =
     parseInt(requestUrl.searchParams.get("hideThread") || "0") === 1 ||
     requestUrl.searchParams.get("hideThread") === "true"
+  const t2iSkipSensitiveWarning =
+    requestUrl.searchParams.get("t2iSkipSensitiveWarning") === "1" ||
+    requestUrl.searchParams.get("t2iSkipSensitiveWarning") === "true"
 
   const r = await axios.get<{
     id_str?: string
@@ -107,6 +109,7 @@ export async function loader({
             lang,
             theme,
             tz: tz.offset,
+            t2iSkipSensitiveWarning,
           }).filter(([k]) => requestUrl.searchParams.has(k))
         )
       )
@@ -177,23 +180,36 @@ export async function loader({
       }
     })
     const params = {
-      widgetsVersion: "9066bb2:1593540614199",
-      origin: "file:///Users/ci7lus/tweet2image.html",
+      dnt: "false",
       embedId: "twitter-widget-0",
+      frame: "false",
       hideCard: hideCard.toString(),
       hideThread: hideThread.toString(),
-      lang,
-      theme,
       id: tweetId,
+      lang,
+      origin: "file:///Users/ci7lus/tweet2image.html",
+      theme,
+      widgetsVersion: "a3525f077c700:1667415560940",
     }
     await Promise.all([
       page.goto(
-        `https://platform.twitter.com/embed/index.html?${querystring.stringify(
+        `https://platform.twitter.com/embed/Tweet.html?${querystring.stringify(
           params
         )}`
       ),
       page.waitForNavigation({ waitUntil: ["networkidle0"] }),
     ])
+    if (t2iSkipSensitiveWarning) {
+      try {
+        await page.evaluate(() => {
+          document
+            .querySelector("div[role=button] > div > span > span")
+            ?.parentElement?.parentElement?.parentElement?.click()
+        })
+      } catch (error) {
+        console.error(error)
+      }
+    }
     const rect = await page.evaluate(() => {
       const { x, y, width, height } = document
         .querySelector("article")
