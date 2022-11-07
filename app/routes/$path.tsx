@@ -170,6 +170,21 @@ export async function loader({
   try {
     const pages = await browser.pages()
     const page = 0 < pages.length ? pages[0] : await browser.newPage()
+    if (t2iSkipSensitiveWarning) {
+      await page.setRequestInterception(true)
+      page.on("request", async (req) => {
+        let url = req.url()
+        if (url.startsWith("https://cdn.syndication.twimg.com/tweet-result")) {
+          req.respond({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ ...r.data, possibly_sensitive: false }),
+          })
+        } else {
+          await req.continue()
+        }
+      })
+    }
     await page.evaluateOnNewDocument(() => {
       const timeout = setTimeout
       // @ts-ignore
@@ -199,23 +214,6 @@ export async function loader({
       ),
       page.waitForNavigation({ waitUntil: ["networkidle0"] }),
     ])
-    if (t2iSkipSensitiveWarning) {
-      try {
-        await Promise.all([
-          page.evaluate(() => {
-            document
-              .querySelector("div[role=button] > div > span > span")
-              ?.parentElement?.parentElement?.parentElement?.click()
-          }),
-          page.waitForNavigation({
-            waitUntil: "domcontentloaded",
-            timeout: 100,
-          }),
-        ])
-      } catch (error) {
-        console.error(error)
-      }
-    }
     const rect = await page.evaluate(() => {
       const { x, y, width, height } = document
         .querySelector("article")
