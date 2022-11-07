@@ -201,11 +201,17 @@ export async function loader({
     ])
     if (t2iSkipSensitiveWarning) {
       try {
-        await page.evaluate(() => {
-          document
-            .querySelector("div[role=button] > div > span > span")
-            ?.parentElement?.parentElement?.parentElement?.click()
-        })
+        await Promise.all([
+          page.evaluate(() => {
+            document
+              .querySelector("div[role=button] > div > span > span")
+              ?.parentElement?.parentElement?.parentElement?.click()
+          }),
+          page.waitForNavigation({
+            waitUntil: "domcontentloaded",
+            timeout: 100,
+          }),
+        ])
       } catch (error) {
         console.error(error)
       }
