@@ -154,7 +154,7 @@ export function MainApp({
     if (hash.current === stat) return
     hash.current = stat
 
-    proceededUrl.current = `https://twitter.com/${m[2] || "twitter"}/status/${
+    proceededUrl.current = `https://twitter.com/${m[2] || "i"}/status/${
       tweetId.current
     }`
     setLoading(true)
