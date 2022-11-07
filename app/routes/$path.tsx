@@ -59,9 +59,6 @@ export async function loader({
     parseInt(requestUrl.searchParams.get("hideThread") || "0") === 1 ||
     requestUrl.searchParams.get("hideThread") === "true"
 
-  console.log(
-    `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=${lang}`
-  )
   const r = await axios.get<{
     id_str?: string
     user?: { screen_name?: string }
@@ -72,7 +69,6 @@ export async function loader({
     }
   )
   if (![301, 200].includes(r.status)) {
-    console.log(r.data)
     return new Response("remote is" + r.status, { status: 400 })
   }
   const { user, id_str } = r.data
