@@ -67,7 +67,11 @@ const FormSelect = <K extends keyof FormState>({
   disabled,
 }: FormSelectProps<K>): React.ReactElement => {
   const handleChange = useCallback(
-    ({ value }: { value: FormState[K] }) => {
+    (newValue: { value: FormState[K] } | null) => {
+      const value = newValue?.value
+      if (!value) {
+        return
+      }
       dispatch(updatedAction(formKey, value))
     },
     [dispatch, formKey]
@@ -90,7 +94,7 @@ type TweetUrlInputProps = Readonly<{
   state: FormState
   disabled: boolean
   dispatch: FormDispatch
-  onEditingStateChange: (editing: boolean) => void
+  onEditingStateChange?: (editing: boolean) => void
 }>
 const TweetUrlInput: React.VFC<TweetUrlInputProps> = ({
   state,
