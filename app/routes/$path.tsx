@@ -62,23 +62,17 @@ export async function loader({
     requestUrl.searchParams.get("t2iSkipSensitiveWarning") === "true"
 
   const r = await axios.get<{
-    id_str?: string
-    user?: { screen_name?: string }
+    url: string
   }>(
-    `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=${lang}`,
+    `https://publish.twitter.com/oembed?url=https%3A%2F%2Ftwitter.com%2Ftwitter%2Fstatus%2F${tweetId}&partner=&hide_thread=false&lang=${lang}`,
     {
       validateStatus: () => true,
     }
   )
   if (![301, 200].includes(r.status)) {
-    return new Response("remote is" + r.status, { status: 400 })
+    return new Response(`remote is ${r.status}`, { status: 500 })
   }
-  const { user, id_str } = r.data
-  if (user?.screen_name && id_str) {
-    headers[
-      "link"
-    ] = `<https://twitter.com/${user.screen_name}/status/${id_str}>; rel="canonical"`
-  }
+  headers["link"] = `${r.data.url}; rel="canonical"`
 
   // CJK統合漢字 CJK Unified Ideographs
   // 日本語が描画可能に
@@ -197,6 +191,8 @@ export async function loader({
     const params = {
       dnt: "false",
       embedId: "twitter-widget-0",
+      features:
+        "eyJ0ZndfdGltZWxpbmVfbGlzdCI6eyJidWNrZXQiOltdLCJ2ZXJzaW9uIjpudWxsfSwidGZ3X2ZvbGxvd2VyX2NvdW50X3N1bnNldCI6eyJidWNrZXQiOnRydWUsInZlcnNpb24iOm51bGx9LCJ0ZndfdHdlZXRfZWRpdF9iYWNrZW5kIjp7ImJ1Y2tldCI6Im9uIiwidmVyc2lvbiI6bnVsbH0sInRmd19yZWZzcmNfc2Vzc2lvbiI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9LCJ0ZndfZm9zbnJfc29mdF9pbnRlcnZlbnRpb25zX2VuYWJsZWQiOnsiYnVja2V0Ijoib24iLCJ2ZXJzaW9uIjpudWxsfSwidGZ3X21peGVkX21lZGlhXzE1ODk3Ijp7ImJ1Y2tldCI6InRyZWF0bWVudCIsInZlcnNpb24iOm51bGx9LCJ0ZndfZXhwZXJpbWVudHNfY29va2llX2V4cGlyYXRpb24iOnsiYnVja2V0IjoxMjA5NjAwLCJ2ZXJzaW9uIjpudWxsfSwidGZ3X3Nob3dfYmlyZHdhdGNoX3Bpdm90c19lbmFibGVkIjp7ImJ1Y2tldCI6Im9uIiwidmVyc2lvbiI6bnVsbH0sInRmd19kdXBsaWNhdGVfc2NyaWJlc190b19zZXR0aW5ncyI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9LCJ0ZndfdXNlX3Byb2ZpbGVfaW1hZ2Vfc2hhcGVfZW5hYmxlZCI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9LCJ0ZndfdmlkZW9faGxzX2R5bmFtaWNfbWFuaWZlc3RzXzE1MDgyIjp7ImJ1Y2tldCI6InRydWVfYml0cmF0ZSIsInZlcnNpb24iOm51bGx9LCJ0ZndfbGVnYWN5X3RpbWVsaW5lX3N1bnNldCI6eyJidWNrZXQiOnRydWUsInZlcnNpb24iOm51bGx9LCJ0ZndfdHdlZXRfZWRpdF9mcm9udGVuZCI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9fQ==",
       frame: "false",
       hideCard: hideCard.toString(),
       hideThread: hideThread.toString(),
@@ -204,20 +200,24 @@ export async function loader({
       lang,
       origin: "file:///Users/ci7lus/tweet2image.html",
       theme,
-      widgetsVersion: "a3525f077c700:1667415560940",
+      widgetsVersion: "aaf4084522e3a:1674595607486",
     }
-    await Promise.all([
+    await Promise.allSettled([
       page.goto(
         `https://platform.twitter.com/embed/Tweet.html?${querystring.stringify(
           params
         )}`
       ),
-      page.waitForNavigation({ waitUntil: ["networkidle0"] }),
+      page.waitForSelector("article", { timeout: 1000 }),
     ])
     const rect = await page.evaluate(() => {
-      const { x, y, width, height } = document
+      const clientRect = document
         .querySelector("article")
-        ?.getBoundingClientRect()!
+        ?.getBoundingClientRect()
+      if (!clientRect) {
+        return
+      }
+      const { x, y, width, height } = clientRect
       return {
         x: x - 1,
         y: y - 1,
@@ -225,6 +225,9 @@ export async function loader({
         height: Math.round(height + 2),
       }
     })
+    if (!rect) {
+      return new Response(`tweet widget is unavailable.`, { status: 500 })
+    }
     await page.setViewport({
       ...chromium.defaultViewport,
       deviceScaleFactor: scale,
