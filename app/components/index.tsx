@@ -68,6 +68,7 @@ export function MainApp({
   GYAZO_CLIENT_ID: string
   currentUrl: string
 }) {
+  const [isMounted, setIsMounted] = useState(false)
   const [loading, setLoading] = useState(false)
   const initialFormState = useInitialFormState()
   const [formState, dispatch] = useReducer(formReducer, initialFormState)
@@ -86,6 +87,8 @@ export function MainApp({
     useGyazoClientIdState(GYAZO_CLIENT_ID)
   const { editing, addTaskOnEditFinished, handleEditingStateChange } =
     useEditingState()
+
+  useEffect(() => setIsMounted(true), [setIsMounted])
 
   const getChangedSetting = () => {
     const settings: { [key: string]: string | number | boolean } = {}
@@ -315,14 +318,16 @@ export function MainApp({
 
           <div className="mx-1">
             <div className="mt-2">
-              <Form
-                ref={formRef}
-                state={formState}
-                dispatch={dispatch}
-                disabled={loading}
-                onEditingStateChange={handleEditingStateChange}
-                onSubmit={onSubmit}
-              />
+              {true && (
+                <Form
+                  ref={formRef}
+                  state={formState}
+                  dispatch={dispatch}
+                  disabled={loading}
+                  onEditingStateChange={handleEditingStateChange}
+                  onSubmit={onSubmit}
+                />
+              )}
             </div>
             <div className="mt-4">
               {loaded && proceededUrl.current ? (
