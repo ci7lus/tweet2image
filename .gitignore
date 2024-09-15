@@ -118,6 +118,5 @@ dist
 .vercel
 /build/
 /public/build
-/api/index.js
-/api/index.js.map
+/api/
 app/styles/tailwind.css
