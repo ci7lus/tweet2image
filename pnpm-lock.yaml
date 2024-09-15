@@ -12,8 +12,8 @@ importers:
         specifier: ^1.2.3
         version: 1.19.3(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@sparticuz/chromium':
-        specifier: ^121.0.0
-        version: 121.0.0
+        specifier: ^127.0.0
+        version: 127.0.0
       axios:
         specifier: ^0.26.0
         version: 0.26.1
@@ -1340,8 +1340,8 @@ packages:
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
     engines: {node: '>=10'}
 
-  '@sparticuz/chromium@121.0.0':
-    resolution: {integrity: sha512-0DiRzlCJljjMKOUh0W36zeR1ibG7EZkwIG+ve8Lg0+tbCM6TWaFlHMSt/6K6Y7o7PFy3eaPoLrUvGRRYUvd81g==}
+  '@sparticuz/chromium@127.0.0':
+    resolution: {integrity: sha512-3YdElfXb6kqcFtlgaArNZohhZ1gWAiWg5kPYIZbaoHFau7dHZvbYg3EEjeE30bYi6cfOnB8wVpluuasF8Y3QyQ==}
     engines: {node: '>= 16'}
 
   '@szmarczak/http-timer@4.0.6':
@@ -6424,7 +6424,7 @@ snapshots:
 
   '@sindresorhus/is@4.6.0': {}
 
-  '@sparticuz/chromium@121.0.0':
+  '@sparticuz/chromium@127.0.0':
     dependencies:
       follow-redirects: 1.15.9
       tar-fs: 3.0.6
