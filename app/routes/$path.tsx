@@ -169,11 +169,25 @@ export async function loader({
       page.on("request", async (req) => {
         let url = req.url()
         if (url.startsWith("https://cdn.syndication.twimg.com/tweet-result")) {
-          const r = await axios.get(url)
+          const r = await axios.get(url, {
+            headers: { "user-agent": "Twitterbot/1.0" },
+            validateStatus: () => true,
+          })
+          if (r.status !== 200) {
+            console.warn(
+              "syndication status is not 200:",
+              url,
+              r.status,
+              r.data
+            )
+          }
           req.respond({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({ ...r.data, possibly_sensitive: false }),
+            status: r.status,
+            contentType: r.headers?.["content-type"],
+            body:
+              r.status === 200
+                ? JSON.stringify({ ...r.data, possibly_sensitive: false })
+                : r.data,
           })
         } else {
           await req.continue()
