@@ -6,19 +6,9 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react"
-import styles from "./styles/index.css"
-import tailwind from "./styles/tailwind.css"
-import toast from "../node_modules/react-toastify/dist/ReactToastify.css"
+import { ColorSchemeScript, MantineProvider } from '@mantine/core';
 
-export function links() {
-  return [
-    { rel: "stylesheet", href: styles },
-    { rel: "stylesheet", href: tailwind },
-    { rel: "stylesheet", href: toast },
-  ]
-}
-
-export default function App() {
+export function Layout({children}: {children: React.ReactNode}) {
   return (
     <html>
       <head>
@@ -33,13 +23,18 @@ export default function App() {
         <link rel="canonical" href="https://tweet2image.vercel.app/" />
         <Meta />
         <Links />
+        <ColorSchemeScript />
       </head>
       <body>
-        <Outlet />
+        <MantineProvider>{children}</MantineProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
       </body>
     </html>
   )
+}
+
+export default function App() {
+  return <Outlet />
 }

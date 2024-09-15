@@ -1,11 +1,12 @@
-import React, { useCallback, useState } from "react"
+import React, { useCallback, useMemo, useState } from "react"
 import clsx from "clsx"
-import Select, { StylesConfig } from "react-select"
 import timezones from "timezones.json"
 import languages from "../../../languages.json"
 import { ImageFormat, Theme } from "../../types"
 import { FormState, FormDispatch } from "./types"
 import { updatedAction } from "./useForm"
+import { Select } from "@mantine/core"
+import {useForm} from "@mantine/form"
 
 const FormLabel: React.FC<JSX.IntrinsicElements["label"]> = ({
   children,
@@ -67,7 +68,7 @@ const FormSelect = <K extends keyof FormState>({
   disabled,
 }: FormSelectProps<K>): React.ReactElement => {
   const handleChange = useCallback(
-    (newValue: { value: FormState[K] } | null) => {
+    (newValue: { value: FormState[K] }) => {
       const value = newValue?.value
       if (value === undefined) {
         return
@@ -81,7 +82,6 @@ const FormSelect = <K extends keyof FormState>({
     <Select
       id={id}
       options={options}
-      styles={formSelectStyle}
       value={options.find((o) => o.value === state[formKey])}
       onChange={handleChange}
       isDisabled={disabled}
