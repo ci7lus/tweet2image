@@ -6,7 +6,8 @@ import nodeRequest from "request"
 import { PassThrough } from "stream"
 import chromium from "@sparticuz/chromium"
 import puppeteer, { Browser } from "puppeteer-core"
-import { writeFile } from "fs/promises"
+import { writeFile, mkdir } from "fs/promises"
+import { cwd } from "process"
 
 const route = new RegExp(/^(\d+)\.(png|jpg)$/)
 const imageCacheUrl = process.env.IMAGE_CACHE_URL
@@ -76,33 +77,16 @@ export async function loader({
   }
   headers["link"] = `${r.data.url}; rel="canonical"`
 
-  await Promise.all([
-    // CJK統合漢字 CJK Unified Ideographs
-    // 日本語が描画可能に
-    chromium.font(
-      "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@165c01b46ea533872e002e0785ff17e44f6d97d8/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf"
-    ),
-    // 数学用英数字記号 Mathematical Alphanumeric Symbols
-    // 𝒜𝓃𝓃𝒶ℳℴ𝒸𝒽𝒾𝓏 などが描画可能に
-    chromium.font(
-      "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@736e6b8f886cae4664e78edb0880fbb5af7d50b7/hinted/ttf/NotoSansMath/NotoSansMath-Regular.ttf"
-    ),
-    // 基本ラテン文字 Basic Latin
-    // 下付き文字などが描画可能に
-    chromium.font(
-      "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@7697007fcb3563290d73f41f56a70d5d559d828c/hinted/ttf/NotoSans/NotoSans-Regular.ttf"
-    ),
-  ])
-
   if (process.env.AWS_EXECUTION_ENV) {
+    await mkdir("/tmp/fonts", { recursive: true }).catch(console.error)
     await writeFile(
-      `/tmp/.fonts/fonts.conf`,
+      "/tmp/fonts/fonts.conf",
       `<?xml version="1.0"?>
 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
 <fontconfig>
   <dir>/var/task/fonts/</dir>
   <dir>/opt/fonts</dir>
-  <dir>/tmp/.fonts</dir>
+  <dir>${cwd()}/public/</dir>
   <cachedir>/tmp/fonts-cache/</cachedir>
   <config></config>
 </fontconfig>`
@@ -180,7 +164,7 @@ export async function loader({
       headless: chromium.headless,
       env: {
         ...process.env,
-        FONTCONFIG_PATH: "/tmp/.fonts",
+        FONTCONFIG_PATH: "/tmp/fonts",
         TZ: tzString ? tzString : "Asia/Tokyo",
       },
     })

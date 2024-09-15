@@ -39,9 +39,9 @@
   },
   "scripts": {
     "postinstall": "remix setup node",
-    "build": "npm run build:css && cross-env NODE_ENV=production remix build",
+    "build": "pnpm build:css && cross-env NODE_ENV=production remix build && ./setup.sh",
     "build:css": "tailwindcss -m -i ./styles/tailwind.css -o ./app/styles/tailwind.css",
-    "dev": "concurrently \"yarn dev:css\" \"cross-env NODE_ENV=development remix dev\"",
+    "dev": "concurrently \"pnpm dev:css\" \"cross-env NODE_ENV=development remix dev\"",
     "dev:css": "tailwindcss -w -i ./styles/tailwind.css -o ./app/styles/tailwind.css"
   },
   "sideEffects": false
