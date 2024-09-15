@@ -23,6 +23,9 @@ importers:
       koa-router:
         specifier: ^12.0.0
         version: 12.0.1
+      node-fetch:
+        specifier: ^2.7.0
+        version: 2.7.0
       puppeteer-core:
         specifier: ^23.3.0
         version: 23.3.0

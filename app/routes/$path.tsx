@@ -6,8 +6,12 @@ import nodeRequest from "request"
 import { PassThrough } from "stream"
 import chromium from "@sparticuz/chromium"
 import puppeteer, { Browser } from "puppeteer-core"
-import { writeFile, mkdir } from "fs/promises"
-import { cwd } from "process"
+import fs from "fs"
+import { Readable } from "stream"
+import { writeFile, mkdir, stat } from "fs/promises"
+import path from "path"
+import { finished } from "stream/promises"
+import fetch from "node-fetch"
 
 const route = new RegExp(/^(\d+)\.(png|jpg)$/)
 const imageCacheUrl = process.env.IMAGE_CACHE_URL
@@ -77,16 +81,56 @@ export async function loader({
   }
   headers["link"] = `${r.data.url}; rel="canonical"`
 
+  let fontLoadPromise: Promise<void>[] | null = null
   if (process.env.AWS_EXECUTION_ENV) {
     await mkdir("/tmp/fonts", { recursive: true }).catch(console.error)
+    const loadFont = async (url: string) => {
+      const name = url.split("/").pop()!
+      const fontPath = path.join("/tmp/fonts", name)
+      if (await stat(fontPath).catch(() => false)) {
+        return
+      }
+      const res = await fetch(url)
+      if (!res.ok || !res.body) {
+        console.error(await res.text())
+        return
+      }
+      const stream = fs.createWriteStream(fontPath)
+      await finished(res.body.pipe(stream))
+    }
+    fontLoadPromise = [
+      // CJK統合漢字 CJK Unified Ideographs
+      // 日本語が描画可能に
+      loadFont(
+        "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@9241cec4a41a3832dfaaa75cd61d8f3be9c906fc/google-fonts/NotoSansJP[wght].ttf"
+      ),
+      // 数学用英数字記号 Mathematical Alphanumeric Symbols
+      // 𝒜𝓃𝓃𝒶ℳℴ𝒸𝒽𝒾𝓏 などが描画可能に
+      loadFont(
+        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@55773c3eb233b5a0eaa07de6226da189b136b4f0/fonts/NotoSansMath/hinted/ttf/NotoSansMath-Regular.ttf"
+      ),
+      // 基本ラテン文字 Basic Latin
+      // 下付き文字などが描画可能に
+      loadFont(
+        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@edf6e37d38c619d271397b01cb464f8976fac5a8/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf"
+      ),
+      // Symbols
+      loadFont(
+        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@1b2fe62733b83bdb2018a77978be2d7aa424fd43/fonts/NotoSansSymbols/hinted/ttf/NotoSansSymbols-Regular.ttf"
+      ),
+      // Symbols2
+      loadFont(
+        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@c16b117609abbe4e60b3f2bd4433bdb3d0accb2e/fonts/NotoSansSymbols2/hinted/ttf/NotoSansSymbols2-Regular.ttf"
+      ),
+    ]
     await writeFile(
       "/tmp/fonts/fonts.conf",
       `<?xml version="1.0"?>
 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
 <fontconfig>
   <dir>/var/task/fonts/</dir>
-  <dir>/opt/fonts</dir>
-  <dir>${cwd()}/public/</dir>
+  <dir>/opt/fonts/</dir>
+  <dir>/tmp/fonts/</dir>
   <cachedir>/tmp/fonts-cache/</cachedir>
   <config></config>
 </fontconfig>`
@@ -184,7 +228,7 @@ export async function loader({
       },
     })
   }
-
+  fontLoadPromise && (await Promise.all(fontLoadPromise))
   console.info("Captureing page...")
   try {
     const pages = await browser.pages()
