@@ -117,7 +117,6 @@ dist
 .now
 .vercel
 /build/
-/public/build
-/api/index.js
-/api/index.js.map
+/public/build/
+/api/
 app/styles/tailwind.css

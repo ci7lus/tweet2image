@@ -132,13 +132,15 @@ export function MainApp({
       t2iSkipSensitiveWarning,
     } = formState
     if (url.length === 0) return
-    const m = url.match(/(twitter.com\/(.+)\/status\/)?(\d+)/)
+    const m = url.match(/((twitter|x).com\/(.+)\/status\/)?(\d+)/)
     if (!m) {
       toast.error("The format of the URL is invalid.")
       return
     }
 
-    tweetId.current = m[3]
+    const gotTweetId = m[4]
+    const gotTweetUser = m[3]
+    tweetId.current = gotTweetId
 
     const stat = [
       tweetId.current,
@@ -154,9 +156,9 @@ export function MainApp({
     if (hash.current === stat) return
     hash.current = stat
 
-    proceededUrl.current = `https://twitter.com/${m[2] || "i"}/status/${
-      tweetId.current
-    }`
+    proceededUrl.current = `https://twitter.com/${
+      gotTweetUser || "i"
+    }/status/${gotTweetId}`
     setLoading(true)
     setGyazoRedirect(null)
 

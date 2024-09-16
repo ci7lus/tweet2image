@@ -1,5 +1,6 @@
 .cache
 public
+build
 dist
 .env
 .envrc
