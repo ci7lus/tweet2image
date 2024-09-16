@@ -68,6 +68,8 @@ export async function loader({
     requestUrl.searchParams.get("t2iSkipSensitiveWarning") === "1" ||
     requestUrl.searchParams.get("t2iSkipSensitiveWarning") === "true"
 
+  console.debug("phase: fetch oembed info...")
+
   const r = await axios.get<{
     url: string
   }>(
@@ -80,6 +82,8 @@ export async function loader({
     return new Response(`remote is ${r.status}`, { status: 500 })
   }
   headers["link"] = `${r.data.url}; rel="canonical"`
+
+  console.debug("phase: fetch fonts...")
 
   let fontLoadPromise: Promise<void>[] | null = null
   if (process.env.AWS_EXECUTION_ENV) {
@@ -193,7 +197,7 @@ export async function loader({
 
   const tzString = tz?.utc.pop()
 
-  console.info("Starting puppeteer...")
+  console.debug("phase: starting puppeteer...")
   let browser: Browser
   if (process.env.AWS_EXECUTION_ENV) {
     browser = await puppeteer.launch({
@@ -213,7 +217,7 @@ export async function loader({
       },
     })
   } else {
-    console.info("Using default puppeteer")
+    console.debug("Using default puppeteer")
     const p: typeof puppeteer = require("puppeteer")
     browser = await p.launch({
       defaultViewport: {
@@ -228,11 +232,12 @@ export async function loader({
       },
     })
   }
-  fontLoadPromise && (await Promise.all(fontLoadPromise))
-  console.info("Captureing page...")
+  console.debug("phase: open a tab...")
   try {
     const pages = await browser.pages()
     const page = 0 < pages.length ? pages[0] : await browser.newPage()
+    fontLoadPromise && (await Promise.all(fontLoadPromise))
+    console.debug("phase: apply page settings...")
     if (t2iSkipSensitiveWarning) {
       await page.setRequestInterception(true)
       page.on("request", async (req) => {
@@ -284,6 +289,7 @@ export async function loader({
       theme,
       widgetsVersion: "a3525f077c700:1667415560940",
     }
+    console.debug("phase: open a page...")
     await Promise.allSettled([
       page.goto(
         `https://platform.twitter.com/embed/Tweet.html?${querystring.stringify(
@@ -311,12 +317,14 @@ export async function loader({
     if (!rect) {
       return new Response(`tweet widget is unavailable.`, { status: 500 })
     }
+    console.debug("phase: viewport setting...")
     await page.setViewport({
       ...chromium.defaultViewport,
       deviceScaleFactor: scale,
       height: rect.height,
       width: rect.width,
     })
+    console.debug("phase: take a screenshot...")
     const buffer = await page.screenshot({
       clip: rect,
       type: mode === "png" ? "png" : "jpeg",
