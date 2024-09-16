@@ -7,8 +7,8 @@ import { PassThrough } from "stream"
 import chromium from "@sparticuz/chromium"
 import puppeteer, { Browser } from "puppeteer-core"
 import fs from "fs"
-import { Readable } from "stream"
-import { writeFile, mkdir, stat } from "fs/promises"
+import crypto from "crypto"
+import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { finished } from "stream/promises"
 import fetch from "node-fetch"
@@ -88,12 +88,33 @@ export async function loader({
   let fontLoadPromise: Promise<void>[] | null = null
   if (process.env.AWS_EXECUTION_ENV) {
     await mkdir("/tmp/fonts", { recursive: true }).catch(console.error)
-    const loadFont = async (url: string) => {
+    const calcSha1 = (path: string) =>
+      new Promise((resolve, reject) => {
+        const shasum = crypto.createHash("sha1")
+        let stream = fs.createReadStream(path)
+        stream.on("data", (chunk) => shasum.update(chunk))
+        stream.on("close", () => resolve(shasum.digest("hex")))
+        stream.on("error", reject)
+      })
+
+    const loadFont = async (url: string, sha1: string) => {
       const name = url.split("/").pop()!
       const fontPath = path.join("/tmp/fonts", name)
-      if (await stat(fontPath).catch(() => false)) {
+      const existsSha1 = await calcSha1(fontPath).catch((error) => {
+        console.debug(error)
+        return false
+      })
+      if (existsSha1 && sha1 === existsSha1) {
         return
       }
+      console.debug(
+        `${fontPath}: ${
+          existsSha1
+            ? `${existsSha1} is not expected hash(${sha1})`
+            : "not found"
+        }`
+      )
+
       const res = await fetch(url)
       if (!res.ok || !res.body) {
         console.error(await res.text())
@@ -101,30 +122,36 @@ export async function loader({
       }
       const stream = fs.createWriteStream(fontPath)
       await finished(res.body.pipe(stream))
+      console.debug(`${fontPath}: done`)
     }
     fontLoadPromise = [
       // CJK統合漢字 CJK Unified Ideographs
       // 日本語が描画可能に
       loadFont(
-        "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@9241cec4a41a3832dfaaa75cd61d8f3be9c906fc/google-fonts/NotoSansJP[wght].ttf"
+        "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@9241cec4a41a3832dfaaa75cd61d8f3be9c906fc/google-fonts/NotoSansJP[wght].ttf",
+        "e58707dbe2d1528cc4728fbfbc6a686ecabe6fea"
       ),
       // 数学用英数字記号 Mathematical Alphanumeric Symbols
       // 𝒜𝓃𝓃𝒶ℳℴ𝒸𝒽𝒾𝓏 などが描画可能に
       loadFont(
-        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@55773c3eb233b5a0eaa07de6226da189b136b4f0/fonts/NotoSansMath/hinted/ttf/NotoSansMath-Regular.ttf"
+        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@55773c3eb233b5a0eaa07de6226da189b136b4f0/fonts/NotoSansMath/hinted/ttf/NotoSansMath-Regular.ttf",
+        "874c710bd2b315081d65b281984f17d7983a19b8"
       ),
       // 基本ラテン文字 Basic Latin
       // 下付き文字などが描画可能に
       loadFont(
-        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@edf6e37d38c619d271397b01cb464f8976fac5a8/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf"
+        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@edf6e37d38c619d271397b01cb464f8976fac5a8/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf",
+        "e33d657a2646a020fafed4ea6dd0c05033e1ee02"
       ),
       // Symbols
       loadFont(
-        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@1b2fe62733b83bdb2018a77978be2d7aa424fd43/fonts/NotoSansSymbols/hinted/ttf/NotoSansSymbols-Regular.ttf"
+        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@1b2fe62733b83bdb2018a77978be2d7aa424fd43/fonts/NotoSansSymbols/hinted/ttf/NotoSansSymbols-Regular.ttf",
+        "cf23e1d222c810d8aaec76270c9fa550b748478f"
       ),
       // Symbols2
       loadFont(
-        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@c16b117609abbe4e60b3f2bd4433bdb3d0accb2e/fonts/NotoSansSymbols2/hinted/ttf/NotoSansSymbols2-Regular.ttf"
+        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@c16b117609abbe4e60b3f2bd4433bdb3d0accb2e/fonts/NotoSansSymbols2/hinted/ttf/NotoSansSymbols2-Regular.ttf",
+        "e02748aa030fcabc4bcead065cfb2334b489dfd3"
       ),
     ]
     await writeFile(
@@ -232,11 +259,14 @@ export async function loader({
       },
     })
   }
+  if (fontLoadPromise) {
+    console.debug("phase: waiting font all settled")
+    await Promise.allSettled(fontLoadPromise)
+  }
   console.debug("phase: open a tab...")
   try {
     const pages = await browser.pages()
     const page = 0 < pages.length ? pages[0] : await browser.newPage()
-    fontLoadPromise && (await Promise.all(fontLoadPromise))
     console.debug("phase: apply page settings...")
     if (t2iSkipSensitiveWarning) {
       await page.setRequestInterception(true)
