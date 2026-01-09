@@ -26,7 +26,7 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
-    "@remix-run/react": "^1.19.3",
+    "@remix-run/react": "^2.17.3",
     "@sparticuz/chromium": "^127.0.0",
     "axios": "^1.8.2",
     "koa": "^2.13.4",
